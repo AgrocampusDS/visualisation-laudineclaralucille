@@ -133,6 +133,7 @@ country_code <- country_code %>%
 ```
 
 ### Graphique B
+Graphique de la consommation de Bière, Vin et Spiritueux en fonction de la religion (majoritaire dans chaque pays)
 
 ```{r}
 
