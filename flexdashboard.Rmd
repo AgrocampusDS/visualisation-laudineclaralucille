@@ -34,50 +34,77 @@ library(ggplot2)
 library(plotly)
 ```
 
-Column {data-width=650}
------------------------------------------------------------------------
+Importation des données et chargement des packages
 
-### An easy solution for dashboard
-
-```{r, echo = TRUE}
-#install.package('flexdasboard')
-#rmarkdown::draft("dashboard.Rmd", template = "flex_dashboard", package = "flexdashboard")
-```
-
-The [flexdashboard website](https://rmarkdown.rstudio.com/flexdashboard/index.html) provides multiple advanced examples.
-
-### Some static graph
-
-```{r data, eval = TRUE, echo = FALSE, results='hide', message = FALSE, warning=FALSE}
-n <- 100
-dta <- tibble(size = round(rnorm(n, mean = 0, sd =10),2), 
-           color = sample(x= c('Blue', 'Yellow'), size = n, replace = TRUE))
+```{r setup, include=FALSE}
+library(flexdashboard)
 
 ```
 
 
-```{r graph_static,  echo = FALSE,  message = FALSE, warning=FALSE}
-p1 <- dta %>% ggplot() +
-  aes(x=color, y = size) +
-  geom_boxplot(aes(fill= color))
-p1
-```
-
-Column {.tabset .tabset-fade}
------------------------------------------------------------------------
-
-
-### Some dynamic maps
-
-```{r  ggplotly, echo = TRUE,  eval = TRUE,  message = FALSE, warning=FALSE}
-plotly::ggplotly(p1)
-```
-
-
-
-### Chart C
+### Graphique A
 
 ```{r}
 
 ```
+
+### Graphique B
+
+```{r}
+
+```
+
+### Graphique C
+
+```{r}
+
+```
+
+
+<!-- Column {data-width=650} -->
+<!-- ----------------------------------------------------------------------- -->
+
+<!-- ### An easy solution for dashboard -->
+
+<!-- ```{r, echo = TRUE} -->
+<!-- #install.package('flexdasboard') -->
+<!-- #rmarkdown::draft("dashboard.Rmd", template = "flex_dashboard", package = "flexdashboard") -->
+<!-- ``` -->
+
+<!-- The [flexdashboard website](https://rmarkdown.rstudio.com/flexdashboard/index.html) provides multiple advanced examples. -->
+
+<!-- ### Some static graph -->
+
+<!-- ```{r data, eval = TRUE, echo = FALSE, results='hide', message = FALSE, warning=FALSE} -->
+<!-- n <- 100 -->
+<!-- dta <- tibble(size = round(rnorm(n, mean = 0, sd =10),2),  -->
+<!--            color = sample(x= c('Blue', 'Yellow'), size = n, replace = TRUE)) -->
+
+<!-- ``` -->
+
+
+<!-- ```{r graph_static,  echo = FALSE,  message = FALSE, warning=FALSE} -->
+<!-- p1 <- dta %>% ggplot() + -->
+<!--   aes(x=color, y = size) + -->
+<!--   geom_boxplot(aes(fill= color)) -->
+<!-- p1 -->
+<!-- ``` -->
+
+<!-- Column {.tabset .tabset-fade} -->
+<!-- ----------------------------------------------------------------------- -->
+
+
+<!-- ### Some dynamic maps -->
+
+<!-- ```{r  ggplotly, echo = TRUE,  eval = TRUE,  message = FALSE, warning=FALSE} -->
+<!-- plotly::ggplotly(p1) -->
+<!-- ``` -->
+
+
+
+<!-- ### Chart C -->
+
+<!-- ```{r} -->
+
+<!-- ``` -->
 
