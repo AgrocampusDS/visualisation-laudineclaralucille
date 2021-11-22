@@ -39,7 +39,7 @@ library(maps)
 Importation des données et chargement des packages
 
 
-### Graphique A
+### Graphique A : cartes des religions et de l'alcool
 
 ```{r}
 religion_brut <- read.csv("projet/WRP national data.csv")
@@ -117,7 +117,14 @@ religion_map <- religion_main %>%
   xlab('') + ylab('') +
   theme(axis.text.x = element_blank(),
         axis.text.y = element_blank(),
-        axis.ticks = element_blank())
+        axis.ticks = element_blank()) +
+  ggtitle("Religions majoritaires dans le monde") 
+
+
+library(plotly)
+
+
+
 ```
 
 ### Graphique B
