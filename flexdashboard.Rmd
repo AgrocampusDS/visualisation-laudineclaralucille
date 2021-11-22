@@ -43,93 +43,81 @@ Importation des données et chargement des packages
 
 ```{r}
 religion_brut <- read.csv("projet/WRP national data.csv")
-country_code <- read.csv("projet/Country_code.csv", sep=':')
-data <- read.csv("projet/alcool_religion.csv", header = TRUE, encoding = 'latin1', sep = ';')
-
-colnames(data)
 
 world_sf <- map_data("world")
 
-religion_signif <- data %>% 
-  select(Country, ends_with("_percent")) %>% 
-  pivot_longer(cols = ends_with("_percent"), names_to = "religion", values_to = "percent") %>% 
-  filter(percent>0.05) %>% 
-  pivot_wider(names_from = religion, values_from = percent)
-
-religion_main <- data %>% 
-  select(Country, ends_with("_percent")) %>% 
-  select(-total_percent) %>% 
-  pivot_longer(cols = ends_with("_percent"), names_to = "religion", values_to = "percent") %>% 
-  group_by(Country) %>% 
+religion_main <- religion_brut %>% 
+  filter(year==2010) %>% 
+  select(name, ends_with("pct"), nonreligpct, -ends_with("genpct"), -sumreligpct,
+         hindgenpct, sikhgenpct, shntgenpct, zorogenpct, bahgenpct,
+         taogenpct, confgenpct, anmgenpct) %>% 
+  pivot_longer(cols = c(ends_with("pct"), nonreligpct), 
+               names_to = "religion", values_to = "percent") %>% 
+  group_by(name) %>% 
   filter(percent==max(percent)) %>% 
-  separate(religion, c("main", 'suffix'), sep = '_') %>% 
-  select(-suffix)
-    
+  mutate(religion = as.factor(religion)) %>% 
+  mutate(religion = fct_recode(religion,
+                               'buddistes' = "budmahpct",
+                               'buddistes' = "budothrpct",
+                               'buddistes' = "budthrpct",
+                               'chrétiens - protestants' = "chrstangpct",
+                               'chrétiens - catholiques' = "chrstcatpct",
+                               'chrétiens - orthodoxes' = "chrstorthpct",
+                               'chrétiens - protestants' = "chrstprotpct",
+                               'chrétiens - autres' = "chrstothrpct",
+                               'musulmans - sunnites' = "islmsunpct",
+                               'musulmans - shiites' = "islmshipct",
+                               'musulmans - autres' = "islmothrpct",
+                               'juifs orthodoxes' = "judorthpct",
+                               'athées' = "nonreligpct",
+                               'animistes' = "anmgenpct",
+                               'hindous' = "hindgenpct",
+                               'shintoistes' = "shntgenpct"
+                               ))
+
+palette_religion = c(
+  `chrétiens - catholiques` = "#00b4ff",
+  `chrétiens - orthodoxes` = "#009eff",
+  `chrétiens - protestants` = "#0066ff",
+  `chrétiens - autres` = "#004fff",
+  `musulmans - sunnites` = "#4d7f17",
+  `musulmans - shiites` = "#6bb120",
+  `musulmans - autres` = "#8ae429",
+  `juifs orthodoxes` = "#ea8611",
+  `buddistes` = "#ffd966",
+  `athées` = "#cc0000",
+  `animistes` = "#7e0f12",
+  `hindous` = "#6a329f",
+  `shintoistes` = "#c90076"
+)
+
 religion_map <- religion_main %>%
-  mutate(region = fct_recode(Country, "USA" = "United States",
+  rename(cowc = name) %>% 
+  full_join(countrycode::codelist, by = "cowc") %>% 
+  select(country.name.en, religion, percent, cowc) %>% 
+  rename(region = country.name.en) %>% 
+  mutate(region = as.factor(region)) %>% 
+  mutate(region = fct_recode(region,
+                             "USA" = "United States",
                              "UK" = "United Kingdom",
-                             "Trinidad" = "Trinidad and Tobago",
-                             "Ivory Coast" = "Cote d'Ivoire",
-                             "Democratic Republic of the Congo" = "Dem. Rep. Congo",
-                             "North Macedonia" = "Macedonia",
-                             "Republic of Congo" = "Rep. Congo")) %>% 
-  mutate(main = droplevels(as.factor(main))) %>% 
-  right_join(world_sf, by = "region") %>% 
+                             "Antigua" = "Antigua & Barbuda",
+                            "Bosnia and Herzegovina"  = "Bosnia & Herzegovina",
+                            "Republic of Congo" = "Congo - Brazzaville",
+                            "Democratic Republic of the Congo" = "Congo - Kinshasa",
+                            "Ivory Coast" = "Côte d’Ivoire",
+                            "Czech Republic" = "Czechia",
+                            "Myanmar" = "Myanmar (Burma)"
+                             )) %>% 
+  full_join(world_sf, by = 'region') %>% 
   ggplot() +
-  aes(fill = main, x = long, y = lat, group = group) +
-  geom_polygon() 
-  coord_map("mercator")
-
-
-test <- world_sf %>% 
-  rename(Country = region) %>% 
-  full_join(country_code, by = "Country") %>% 
-  filter(is.na(long) | is.na(Code)) %>% 
-  group_by(Country) %>% 
-  summarize_if(is.numeric, mean) 
-
-country_code <- country_code %>% 
-  mutate(Country = fct_recode(Country,
-                              "Antigua" = "Antigua and Barbuda",
-                              "Bolivia" = "Bolivia (Plurinational State of)",
-                              "Bonaire" = "Bonaire, Sint Eustatius and Saba",
-                              "Brunei" = "Brunei Darussalam",
-                              "Cape Verde" = "Cabo Verde",
-                              "Cocos Islands" = "Cocos (Keeling) Islands",
-                              "Democratic Republic of the Congo" = "Congo, Democratic Republic of the",
-                              "Czech Republic" = "Czechia",
-                              "Ivory Coast" = "Côte d'Ivoire",
-                              "Curacao" = "Curaçao",
-                              "Falkland Islands" = "Falkland Islands (Malvinas)",
-                              "French Southern and Antarctic Lands" = "	French Southern Territories",
-                              "Heard Island" = "Heard Island and McDonald Islands",
-                              "Iran" = "Iran (Islamic Republic of)",
-                              "North Korea" = "Korea (Democratic People's Republic of",
-                              "Laos" = "Lao People's Democratic Republic",
-                              "Micronesia" = "Micronesia (Federated States of)",
-                              "Moldova" = "Moldova, Republic of",
-                              "Palestine" = "Palestine, State of",
-                              "Pitcairn Islands" = "Pitcairn",
-                              "Republic of Congo" = "Congo",
-                              "Reunion" = "Réunion",
-                              "Russia" = "Russian Federation",
-                              "Saint Barthelemy" = "Saint Barthélemy",
-                              "Saint Helena" = "Saint Helena, Ascension and Tristan da Cunha",
-                              "Saint Kitts" = "Saint Kitts and Nevis",
-                              "Saint Martin" = "Saint Martin (French part)",
-                              "Saint Vincent" = "Saint Vincent and the Grenadines",
-                              "Sint Maarten" = "Sint Maarten (Dutch part)",
-                              "South Georgia" = "South Georgia and the South Sandwich Islands",
-                              "South Korea" = "Korea, Republic of",
-                              "Syria" = "Syrian Arab Republic",
-                              "Taiwan" = "Taiwan, Province of China",
-                              "Tanzania" = "Tanzania, United Republic of",
-                              "UK" = "United Kingdom of Great Britain and Northern Ireland",
-                              "USA" = "United States of America",
-                              "Venezuela" = "Venezuela (Bolivarian Republic of)",
-                              "Vietnam" = "Viet Nam"))
-
-
+  aes(fill = religion, x = long, y = lat, group = group) +
+  geom_polygon() +
+  coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80)) +
+  scale_fill_manual(values = palette_religion) +
+  xlab('') + ylab('') +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank())
 ```
 
 ### Graphique B
