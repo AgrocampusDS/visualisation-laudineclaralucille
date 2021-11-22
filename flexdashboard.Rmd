@@ -132,15 +132,50 @@ country_code <- country_code %>%
 ```
 
 ### Graphique B
+Graphique de la consommation de Bière, Vin et Spiritueux en fonction de la religion (majoritaire dans chaque pays)
 
 ```{r}
+data <- read.delim("~/Agro/5A/Visualisation de donnees/Projet/alcool_religion.csv", sep = ";", dec=".")
+religion_main <- data %>% 
+  select(Country,ends_with("PerCapita"), ends_with("_percent")) %>% 
+  select(-total_percent) %>% 
+  pivot_longer(cols = ends_with("_percent"), names_to = "religion", values_to = "percent") %>% 
+  group_by(Country) %>% 
+  filter(percent==max(percent)) %>% 
+  separate(religion, c("main", 'suffix'), sep = '_') %>% 
+  select(-suffix) %>% 
+  group_by(main) %>% 
+  mutate(n = n()) %>% 
+  filter(n>1) %>% 
+  select(-n) %>% 
+  pivot_longer(cols = 3:5, names_to = "Type" ) %>%
+  mutate(Type = as.factor(Type))# %>% 
+
+
+graph2 <- ggplot(data = religion_main)+
+  aes(x=main, y=value, fill = Type)+
+  geom_boxplot(outlier.shape=NA)+
+  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred")) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+graph2 
 
 ```
 
 ### Graphique C
 
 ```{r}
+data <- read.delim("~/Agro/5A/Visualisation de donnees/Projet/alcool_religion.csv", sep = ";", dec=".")
+data_islam <- data %>% 
+  select(7,8,9,65) %>% 
+  pivot_longer(cols = 1:3, names_to = "Type" ) %>%
+  mutate(Type = as.factor(Type))
 
+
+graph3 <-ggplot(data=data_islam, aes(x=islam_percent, y= value, color=Type)) +
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE, fullrange=TRUE)+
+  scale_color_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"))
+graph3
 ```
 
 
