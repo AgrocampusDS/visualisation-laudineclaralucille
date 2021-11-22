@@ -38,12 +38,23 @@ library(maps)
 
 Importation des données et chargement des packages
 
+```{r data}
+religion_brut <- read.csv("WRP national data.csv")
+alcool_brut <- read.csv("HappinessAlcoholConsumption.csv")
+
+alcool_religion <- countrycode::codelist %>% 
+  select(country.name.en, cowc) %>% 
+  rename(Country = country.name.en) %>% 
+  right_join(alcool_brut, by = "Country") %>% 
+  rename(name = cowc) %>% 
+  full_join(religion_brut, by = "name") 
+```
+
+
 
 ### Graphique A : cartes des religions et de l'alcool
 
 ```{r}
-religion_brut <- read.csv("projet/WRP national data.csv")
-
 world_sf <- map_data("world")
 
 religion_main <- religion_brut %>% 
