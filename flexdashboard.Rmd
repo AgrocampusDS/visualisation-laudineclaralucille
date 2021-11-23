@@ -34,6 +34,7 @@ library(ggplot2)
 library(plotly)
 library(sf)
 library(maps)
+library(gridExtra)
 ```
 
 Importation des données et chargement des packages
@@ -121,44 +122,58 @@ religion_map <- religion_main %>%
                              )) %>% 
   full_join(world_sf, by = 'region') %>% 
   ggplot() +
-  aes(fill = religion, x = long, y = lat, group = group,
-      text = paste(round(percent, 2)*100, '%')) +
+  aes(fill = religion, x = long, y = lat, group = group) +
   geom_polygon() +
   coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80)) +
-  scale_fill_manual(values = palette_religion) +
+  scale_fill_manual(values = palette_religion, name = '') +
   xlab('') + ylab('') +
   theme(axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks = element_blank()) +
-  ggtitle("Religions majoritaires dans le monde") 
+  ggtitle("Religions majoritaires en 2010 dans le monde") +
+  guides(fill = guide_legend(ncol = 3))
 
-ggplotly(religion_map)
-
-alcool_brut %>% 
-  mutate(total_alcool = (Beer_PerCapita + Wine_PerCapita + Spirit_PerCapita)/100) %>% 
-  select(Country, total_alcool) %>% 
-  rename(region = Country) %>% 
+alcool_map <- alcool_brut %>% 
+  select(Country.Code, Country.Name, X2010, Indicator.Name) %>% 
+  mutate(Indicator.Name = as.factor(Indicator.Name)) %>% 
+  mutate(Indicator.Name = fct_recode(Indicator.Name,
+                                     'alcool_consum' = "Total alcohol consumption per capita (liters of pure alcohol, projected estimates, 15+ years of age)")) %>% 
+  pivot_wider(names_from = Indicator.Name, values_from = X2010) %>% 
+  rename(iso3c = Country.Code) %>% 
+  right_join(countrycode::codelist, by = "iso3c") %>% 
+  select(country.name.en, alcool_consum) %>% 
+  rename(region = country.name.en) %>% 
+  mutate(region = as.factor(region)) %>% 
   mutate(region = fct_recode(region,
-                            'USA' = "United States",
-                           'UK' = "United Kingdom",
-                           'Trinidad' = "Trinidad and Tobago",
-                           'Russia' = "Russian Federation",
-                           'North Macedonia' = "Macedonia",
-                           "Democratic Republic of the Congo" = "Dem. Rep. Congo",
-                           'Republic of Congo' = "Rep. Congo",
-                           'Ivory Coast' = "Cote d'Ivoire")) %>% 
-  full_join(world_sf, by = "region") %>% 
+                             "USA" = "United States",
+                             "UK" = "United Kingdom",
+                             "Antigua" = "Antigua & Barbuda",
+                            "Bosnia and Herzegovina"  = "Bosnia & Herzegovina",
+                            "Republic of Congo" = "Congo - Brazzaville",
+                            "Democratic Republic of the Congo" = "Congo - Kinshasa",
+                            "Ivory Coast" = "Côte d’Ivoire",
+                            "Czech Republic" = "Czechia",
+                            "Myanmar" = "Myanmar (Burma)"
+                             )) %>% 
+  full_join(world_sf, by = 'region') %>% 
   ggplot() +
-  geom_polygon(aes(fill = total_alcool, x = long, y = lat, group = group)) +
+  geom_polygon(aes(fill = alcool_consum, x = long, y = lat, group = group)) +
   coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80)) +
-  viridis::scale_fill_viridis(option = 'H', begin = 0.4) +
+  viridis::scale_fill_viridis(option = 'H', begin = 0.4,
+                              name = "En litre d'alcool pur par habitant de plus de 15 ans.",
+                              breaks = c(5,10,15),
+                              labels = c('5L', '10L', '15L')) +
     xlab('') + ylab('') +
   theme(axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks = element_blank()) +
-  ggtitle("Consommation d'alcool en 2016 dans le monde") 
+  ggtitle("Consommation d'alcool en 2010 dans le monde") 
 
-?scale_fill_viridis
+greligion <- ggplotGrob(religion_map)
+galcool <- ggplotGrob(alcool_map)
+grid::grid.newpage()
+grid::grid.draw(rbind(greligion, galcool))
+
 ```
 
 ### Graphique B
