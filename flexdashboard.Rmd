@@ -121,7 +121,8 @@ religion_map <- religion_main %>%
                              )) %>% 
   full_join(world_sf, by = 'region') %>% 
   ggplot() +
-  aes(fill = religion, x = long, y = lat, group = group) +
+  aes(fill = religion, x = long, y = lat, group = group,
+      text = paste(round(percent, 2)*100, '%')) +
   geom_polygon() +
   coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80)) +
   scale_fill_manual(values = palette_religion) +
@@ -131,8 +132,7 @@ religion_map <- religion_main %>%
         axis.ticks = element_blank()) +
   ggtitle("Religions majoritaires dans le monde") 
 
-
-library(plotly)
+ggplotly(religion_map)
 
 
 
