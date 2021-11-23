@@ -38,6 +38,7 @@ library(highcharter)
 ```
 
 Importation des données et chargement des packages
+TEST
 
 ```{r data}
 religion_brut <- read.csv("WRP national data.csv")
