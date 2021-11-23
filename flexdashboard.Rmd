@@ -233,6 +233,12 @@ graph4 <-ggplot(data=data_islam2, aes(x=Conso_totale, y= value, color=Type)) +
 graph4 
 ```
 
+```{r}
+data_graph3 <- read.delim("~/Agro/5A/Visualisation de donnees/Projet/alcool_religion.csv", sep = ";", dec=".") %>% 
+  select(ends_with ("Capita"), ends_with("all"), population) %>% 
+  mutate(Conso_totale = Beer_PerCapita + Wine_PerCapita + Spirit_PerCapita)
+```
+
 
 <!-- Column {data-width=650} -->
 <!-- ----------------------------------------------------------------------- -->
