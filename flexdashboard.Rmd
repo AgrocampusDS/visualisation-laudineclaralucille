@@ -134,7 +134,20 @@ religion_map <- religion_main %>%
 
 ggplotly(religion_map)
 
-ceci est un test
+alcool_brut %>% 
+  mutate(total_alcool = (Beer_PerCapita + Wine_PerCapita + Spirit_PerCapita)/100) %>% 
+  select(Country, total_alcool) %>% 
+  rename(region = Country) %>% 
+  mutate(region = fct_recode(region,
+                            'USA' = "United States",
+                           'UK' = "United Kingdom",
+                           'Trinidad' = "Trinidad and Tobago",
+                           'Russia' = "Russian Federation",
+                           'North Macedonia' = "Macedonia",
+                           "Democratic Republic of the Congo" = "Dem. Rep. Congo",
+                           'Republic of Congo' = "Rep. Congo",
+                           'Ivory Coast' = "Cote d'Ivoire")) %>% 
+  left_join(world_sf, by = "region")
 
 
 ```
