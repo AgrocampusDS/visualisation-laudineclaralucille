@@ -147,7 +147,11 @@ alcool_brut %>%
                            "Democratic Republic of the Congo" = "Dem. Rep. Congo",
                            'Republic of Congo' = "Rep. Congo",
                            'Ivory Coast' = "Cote d'Ivoire")) %>% 
-  left_join(world_sf, by = "region")
+  left_join(world_sf, by = "region") %>% 
+  ggplot() +
+  aes(fill = total_alcool, x = long, y = lat, group = group) +
+  geom_polygon() +
+  coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80))
 
 
 ```
