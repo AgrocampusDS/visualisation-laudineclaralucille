@@ -40,7 +40,7 @@ Importation des données et chargement des packages
 
 ```{r data}
 religion_brut <- read.csv("WRP national data.csv")
-alcool_brut <- read.csv("HappinessAlcoholConsumption.csv")
+alcool_brut <- read.csv("DATAWORLD.csv", sep = ';')
 
 alcool_religion <- countrycode::codelist %>% 
   select(country.name.en, cowc) %>% 
@@ -151,8 +151,12 @@ alcool_brut %>%
   ggplot() +
   geom_polygon(aes(fill = total_alcool, x = long, y = lat, group = group)) +
   coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80)) +
-  viridis::scale_fill_viridis(option = 'H', begin = 0.4)
-  
+  viridis::scale_fill_viridis(option = 'H', begin = 0.4) +
+    xlab('') + ylab('') +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  ggtitle("Consommation d'alcool en 2016 dans le monde") 
 
 ?scale_fill_viridis
 ```
