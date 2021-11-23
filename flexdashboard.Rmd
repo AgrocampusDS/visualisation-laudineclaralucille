@@ -134,6 +134,7 @@ religion_map <- religion_main %>%
 
 ggplotly(religion_map)
 
+ceci est un test
 
 
 ```
