@@ -127,6 +127,7 @@ religion_map <- religion_main %>%
         axis.text.y = element_blank(),
         axis.ticks = element_blank()) +
   ggtitle("Religions majoritaires dans le monde") 
+
 library(plotly)
 ```
 
@@ -136,31 +137,48 @@ library(plotly)
 Graphique de la consommation de Bière, Vin et Spiritueux en fonction de la religion (majoritaire dans chaque pays)
 
 ```{r}
-data <- alcool_religion
-religion_main <- data %>% 
-  select(Country,ends_with("PerCapita"), ends_with("_percent")) %>% 
-  select(-total_percent) %>% 
-  pivot_longer(cols = ends_with("_percent"), names_to = "religion", values_to = "percent") %>% 
+religion_main <- alcool_religion %>% 
+    select(Country, ends_with("PerCapita"), -GDP_PerCapita, chrstprotpct, chrstcatpct, chrstorthpct, chrstangpct, chrstothrpct, budgenpct, islmgenpct, judgenpct, nonreligpct) %>%
+  pivot_longer(cols = ends_with("pct"), names_to = "religion", values_to = "percent") %>% 
   group_by(Country) %>% 
-  filter(percent==max(percent)) %>% 
-  separate(religion, c("main", 'suffix'), sep = '_') %>% 
-  select(-suffix) %>% 
-  group_by(main) %>% 
-  mutate(n = n()) %>% 
-  filter(n>1) %>% 
-  select(-n) %>% 
-  mutate(main = as.factor(main)) %>%
-  pivot_longer(cols = 3:5, names_to = "Type" ) %>%
+  filter(percent==max(percent)) %>%
+  mutate(religion = as.factor(religion)) %>% 
+  mutate(religion = fct_recode(religion,
+                               'Bouddhistes' = "budgenpct",
+                               'Chrétiens - protestants' = "chrstangpct",
+                               'Chrétiens - catholiques' = "chrstcatpct",
+                               'Chrétiens - orthodoxes' = "chrstorthpct",
+                               'Chrétiens - protestants' = "chrstprotpct",
+                               'Chrétiens - protestants' = "chrstangpct",
+                               'Chrétiens - autres' = "chrstothrpct",
+                               'Musulmans' = "islmgenpct",
+                               'Juifs' = "judgenpct",
+                               'Athées' = "nonreligpct"
+                               ))
+religion_main <- religion_main %>%
+  group_by(religion) %>%
+  mutate(n = n()) %>%
+  filter(n>1) %>%
+  select(-n) %>%
+  mutate(religion = as.factor(religion)) %>%
+  pivot_longer(cols = 2:4, names_to = "Type" ) %>%
   mutate(Type = as.factor(Type)) 
 
-graph2 <- ggplot(data = religion_main)+
-  aes(x=main, y=value, fill = Type)+
-  geom_boxplot(outlier.shape=NA)+
-  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred")) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
-  theme(legend.position="top") + 
-  scale_x_discrete(limits=c("sunni", "islam", "buddhism","christianity","noreligion"))
-graph2
+p <- ggplot(data = religion_main) 
+p <- p + aes(x=religion, y=value, fill = Type) 
+p <- p + geom_boxplot(outlier.shape=NA) 
+p <- p +  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"))
+p <- p + theme(plot.margin = unit(c(1,1,1,1), "lines"))
+p <- p + theme(axis.text.x = element_text(angle = 65, hjust = 1),axis.line = element_line(colour = "black", size = 1, linetype = "solid"))
+p <- p + theme(legend.position="bottom") 
+p <- p + labs(x="",y="",title="Représentation de la consommation d'alcool par habitant \nen fonction de la religion majoritaire",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin",fill = "Type d'alcool")
+p <- p + theme(plot.title = element_text(face = "bold", size = 16,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))
+p <- p + scale_x_discrete(limits=c("Chrétiens - autres","Chrétiens - catholiques", "Chrétiens - orthodoxes","Chrétiens - protestants", "Athées", "Bouddhistes", "Musulmans"))
+p <- p + scale_y_continuous(labels=c("0 L par habitant","100 L par habitant","200 L par habitant","300 L par habitant","400 L par habitant"))
+p <- p + annotate("rect", xmin = c(0.5,4.6,5.6,6.5), xmax = c(4.5,5.45,6.45,7.45), ymin = -5, ymax = 410, fill = c("blue","#cc0000","#ffd966","#4d7f17"), alpha = 0.1) 
+p <- p + theme(panel.background = element_rect(fill = "white",size = 2))
+p
+
 ```
 
 ### Graphique C
