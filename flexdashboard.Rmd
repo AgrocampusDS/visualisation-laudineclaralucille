@@ -29,26 +29,28 @@ color:black!important;
 library(flexdashboard)
 library(tidyverse)
 library(ggplot2)
-library(plotly)
 library(sf)
 library(maps)
-library(dplyr)
 library(highcharter) 
 library(mapproj)
+library(gridExtra)
+library(gtable)
+library(cowplot)
+library(ggpubr)
 ```
 
 ```{r data, include=FALSE}
 # Importation des trois jeux de données brutes : 
 religion_brut <- read.csv("WRP national data.csv")
-alcool_brut <- read.csv("HappinessAlcoholConsumption.csv")
+alcool_brut <- read.csv("DATAWORLD.csv", sep = ';')
 
-# Jointures entre les jeux de données
-alcool_religion <- countrycode::codelist %>% 
-  select(country.name.en, cowc) %>% 
-  rename(Country = country.name.en) %>% 
-  right_join(alcool_brut, by = "Country") %>% 
+#Jointure entre jeu de données alcool et religion
+alcool_religion <- countrycode::codelist %>% #traduction des codes pays
+  select(cowc, iso3c) %>% 
+  rename(Country.Code = iso3c) %>% 
+  right_join(alcool_brut, by = "Country.Code") %>% #jointure du jeu alcool sur iso3c
   rename(name = cowc) %>% 
-  full_join(religion_brut, by = "name") 
+  full_join(religion_brut, by = "name") #jointure du jeu religion sur cowc
 ```
 
 Cartes
@@ -57,60 +59,65 @@ Cartes
 ### Religions majoritaires et consommation d'alcool à travers le monde
 
 ```{r}
+#on récupère le contour des pays
 world_sf <- map_data("world")
 
 religion_main <- religion_brut %>% 
-  filter(year==2010) %>% 
-  select(name, ends_with("pct"), nonreligpct, -ends_with("genpct"), -sumreligpct,
+  filter(year==2010) %>% #sélection de l'année 2010
+  select(name, ends_with("pct"), -ends_with("genpct"), -sumreligpct,
          hindgenpct, sikhgenpct, shntgenpct, zorogenpct, bahgenpct,
-         taogenpct, confgenpct, anmgenpct) %>% 
+         taogenpct, confgenpct, anmgenpct) %>% #sélection des variables d'intérêt
   pivot_longer(cols = c(ends_with("pct"), nonreligpct), 
                names_to = "religion", values_to = "percent") %>% 
   group_by(name) %>% 
-  filter(percent==max(percent)) %>% 
+  filter(percent==max(percent)) %>% #selection de la religion majoritaire
   mutate(religion = as.factor(religion)) %>% 
-  mutate(religion = fct_recode(religion,
-                               'buddistes' = "budmahpct",
-                               'buddistes' = "budothrpct",
-                               'buddistes' = "budthrpct",
-                               'chrétiens - protestants' = "chrstangpct",
-                               'chrétiens - catholiques' = "chrstcatpct",
-                               'chrétiens - orthodoxes' = "chrstorthpct",
-                               'chrétiens - protestants' = "chrstprotpct",
-                               'chrétiens - autres' = "chrstothrpct",
-                               'musulmans - sunnites' = "islmsunpct",
-                               'musulmans - shiites' = "islmshipct",
-                               'musulmans - autres' = "islmothrpct",
-                               'juifs orthodoxes' = "judorthpct",
-                               'athées' = "nonreligpct",
-                               'animistes' = "anmgenpct",
-                               'hindous' = "hindgenpct",
-                               'shintoistes' = "shntgenpct"
+  mutate(religion = fct_recode(religion, #recodage des religions pour la présentation
+                               'Bouddhistes' = "budmahpct",
+                               'Bouddhistes' = "budothrpct",
+                               'Buddistes' = "budthrpct",
+                               'Chrétiens - protestants' = "chrstangpct",
+                               'Chrétiens - catholiques' = "chrstcatpct",
+                               'Chrétiens - orthodoxes' = "chrstorthpct",
+                               'Chrétiens - protestants' = "chrstprotpct",
+                               'Chrétiens - autres' = "chrstothrpct",
+                               'Musulmans - sunnites' = "islmsunpct",
+                               'Musulmans - shiites' = "islmshipct",
+                               'Musulmans - autres' = "islmibdpct",
+                               'Musulmans - autres' = "islmothrpct",
+                               'Juifs orthodoxes' = "judorthpct",
+                               'Athées' = "nonreligpct",
+                               'Animistes' = "anmgenpct",
+                               'Hindous' = "hindgenpct",
+                               'Shintoistes' = "shntgenpct"
                                ))
 
+#creation d'une palette pour les différents groupes de religion.
+#chrétienté : bleu, islam : vert, autres : du jaune au violet.
 palette_religion = c(
-  `chrétiens - catholiques` = "#00b4ff",
-  `chrétiens - orthodoxes` = "#009eff",
-  `chrétiens - protestants` = "#0066ff",
-  `chrétiens - autres` = "#004fff",
-  `musulmans - sunnites` = "#4d7f17",
-  `musulmans - shiites` = "#6bb120",
-  `musulmans - autres` = "#8ae429",
-  `juifs orthodoxes` = "#ea8611",
-  `buddistes` = "#ffd966",
-  `athées` = "#cc0000",
-  `animistes` = "#7e0f12",
-  `hindous` = "#6a329f",
-  `shintoistes` = "#c90076"
+  `Chrétiens - catholiques` = "#00b4ff",
+  `Chrétiens - orthodoxes` = "#009eff",
+  `Chrétiens - protestants` = "#0066ff",
+  `Chrétiens - autres` = "#004fff",
+  `Musulmans - sunnites` = "#4d7f17",
+  `Musulmans - shiites` = "#6bb120",
+  `Musulmans - autres` = "#8ae429",
+  `Juifs orthodoxes` = "#ea8611",
+  `Bouddhistes` = "#ffd966",
+  `Athées` = "#cc0000",
+  `Animistes` = "#7e0f12",
+  `Hindous` = "#6a329f",
+  `Shintoistes` = "#c90076"
 )
 
+#création de la carte des religions majoritaires
 religion_map <- religion_main %>%
   rename(cowc = name) %>% 
-  full_join(countrycode::codelist, by = "cowc") %>% 
+  full_join(countrycode::codelist, by = "cowc") %>% #jointure avec countrycode
   select(country.name.en, religion, percent, cowc) %>% 
   rename(region = country.name.en) %>% 
   mutate(region = as.factor(region)) %>% 
-  mutate(region = fct_recode(region,
+  mutate(region = fct_recode(region, #recodage des pays pour coller avec world_sf
                              "USA" = "United States",
                              "UK" = "United Kingdom",
                              "Antigua" = "Antigua & Barbuda",
@@ -121,19 +128,93 @@ religion_map <- religion_main %>%
                             "Czech Republic" = "Czechia",
                             "Myanmar" = "Myanmar (Burma)"
                              )) %>% 
-  full_join(world_sf, by = 'region') %>% 
+  full_join(world_sf, by = 'region') %>% #jointure avec world_sf
   ggplot() +
   aes(fill = religion, x = long, y = lat, group = group) +
   geom_polygon() +
-  coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80)) +
-  scale_fill_manual(values = palette_religion) +
+  coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80)) + #ajustement des coordonnées
+  scale_fill_manual(values = palette_religion, name = '') + #palette graphique personnalisée
   xlab('') + ylab('') +
-  theme(axis.text.x = element_blank(),
+  theme(axis.text.x = element_blank(), #ajustement des axes
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = 'None') + #enlever la légende 
+  ggtitle("Religions majoritaires en 2010 dans le monde") #titre
+
+#créer la légende du graphique des religions majoritaires
+religion_legend <- religion_main %>%
+  mutate(religion = fct_recode(religion, #recodage pour supprimer des sous-religions
+                               "Chrétiens" = 'Chrétiens - protestants',
+                               "Chrétiens" = 'Chrétiens - catholiques',
+                               "Chrétiens" = 'Chrétiens - orthodoxes',
+                               "Chrétiens" = 'Chrétiens - protestants',
+                               "Chrétiens" = 'Chrétiens - autres',
+                               "Musulmans" = 'Musulmans - sunnites',
+                               "Musulmans" = 'Musulmans - shiites',
+                               "Musulmans" = 'Musulmans - autres',
+                               "Musulmans" = 'Musulmans - autres')) %>% 
+  ggplot() +
+  aes(percent, fill = religion) +
+  geom_bar() +
+  scale_fill_manual(values = c( #palette personnalisée
+    `Chrétiens` = "#009EFF",
+    `Musulmans` = "#76C223",
+    `Juifs orthodoxes` = "#ea8611",
+    `Bouddhistes` = "#ffd966",
+    `Athées` = "#cc0000",
+    `Animistes` = "#7e0f12",
+    `Hindous` = "#6a329f",
+    `Shintoistes` = "#c90076"),
+    name = '')
+
+#création de la carte de consommation d'alcool
+alcool_map <- alcool_brut %>% 
+  select(Country.Code, Country.Name, X2010, Indicator.Name) %>% 
+  mutate(Indicator.Name = as.factor(Indicator.Name)) %>% 
+  mutate(Indicator.Name = fct_recode(Indicator.Name, #recodage des noms de facteur
+                                     'alcool_consum' = "Total alcohol consumption per capita (liters of pure alcohol, projected estimates, 15+ years of age)")) %>% 
+  pivot_wider(names_from = Indicator.Name, values_from = X2010) %>% #creation d'une nouvelle variable : consommation d'alcool en 2010
+  rename(iso3c = Country.Code) %>% 
+  right_join(countrycode::codelist, by = "iso3c") %>% #jointure avec countrycode
+  select(country.name.en, alcool_consum) %>% #selection du nom de pays et conso d'alcool
+  rename(region = country.name.en) %>% 
+  mutate(region = as.factor(region)) %>% 
+  mutate(region = fct_recode(region, #recodage des pays pour coller avec world_sf
+                             "USA" = "United States",
+                             "UK" = "United Kingdom",
+                             "Antigua" = "Antigua & Barbuda",
+                            "Bosnia and Herzegovina"  = "Bosnia & Herzegovina",
+                            "Republic of Congo" = "Congo - Brazzaville",
+                            "Democratic Republic of the Congo" = "Congo - Kinshasa",
+                            "Ivory Coast" = "Côte d’Ivoire",
+                            "Czech Republic" = "Czechia",
+                            "Myanmar" = "Myanmar (Burma)"
+                             )) %>% 
+  full_join(world_sf, by = 'region') %>% #jointure avec world_sf
+  ggplot() +
+  geom_polygon(aes(fill = alcool_consum, x = long, y = lat, group = group)) +
+  coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80)) + #ajustement des coordonnées de la carte
+  viridis::scale_fill_viridis(option = 'H', begin = 0.4, #palette personnalisée : du vert au rouge
+                              name = "En litre d'alcool pur par 
+habitant de plus de 15 ans.",
+                              breaks = c(5,10,15),
+                              labels = c('5L', '10L', '15L')) +
+    xlab('') + ylab('') +
+  theme(axis.text.x = element_blank(), #ajustement des axes
         axis.text.y = element_blank(),
         axis.ticks = element_blank()) +
-  ggtitle("Religions majoritaires dans le monde") 
+  ggtitle("Consommation d'alcool en 2010 dans le monde") #titre
 
-religion_map
+alcool_legend <- alcool_map #récupérer la légende du graphe
+
+alcool_map <- alcool_map + theme(legend.position = 'None') #supprimer la légende de la carte
+
+greligion <- ggplotGrob(plot_grid(religion_map, get_legend(religion_legend)))
+galcool <- ggplotGrob(plot_grid(alcool_map, get_legend(alcool_legend)))
+
+grid::grid.newpage()
+grid::grid.draw(rbind(greligion, galcool))
+
 ```
 
 Boxplots - religions
@@ -224,7 +305,7 @@ graph_christ
 ```
 
 Graphique à finir
-=======================================================================
+
 
 ### Graphique C : 
 
