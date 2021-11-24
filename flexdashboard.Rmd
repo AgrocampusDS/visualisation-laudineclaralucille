@@ -57,7 +57,7 @@ alcool_religion <- countrycode::codelist %>% #traduction des codes pays
 Cartes
 =======================================================================
 
-# Religions majoritaires et consommation d'alcool à travers le monde
+### Religions majoritaires et consommation d'alcool à travers le monde
 
 ```{r}
 #on récupère le contour des pays
@@ -218,13 +218,13 @@ grid::grid.draw(rbind(greligion, galcool))
 
 ```
 
-### Chrétiens : catholiques, protestants, orthodoxes et autres.
-### Musulmans : sunnites, chiites et autres.
+> Le groupe des chrétiens regroupe les orthodoxes, catholiques, protestants et autres.
+> Le groupe des musulmans regroupe les sunnites, chiites, ibadi et autres.
 
 Boxplots - religions
 =======================================================================
 
-# Consommation d'alcool en fonction des 4 grandes religions : Christianisme, Islamisme, Athéisme et Bouddhisme
+### Consommation d'alcool en fonction des 4 grandes religions : Christianisme, Islamisme, Athéisme et Bouddhisme
 
 ```{r}
 conso_religions_majoritaires <- alcool_religion %>% 
