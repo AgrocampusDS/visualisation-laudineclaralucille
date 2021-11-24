@@ -31,10 +31,11 @@ color:black!important;
 library(flexdashboard)
 library(tidyverse)
 library(ggplot2)
-library(plotly)
 library(sf)
 library(maps)
 library(gridExtra)
+library(gtable)
+library(cowplot)
 ```
 
 Importation des données et chargement des packages
@@ -43,12 +44,13 @@ Importation des données et chargement des packages
 religion_brut <- read.csv("WRP national data.csv")
 alcool_brut <- read.csv("DATAWORLD.csv", sep = ';')
 
-alcool_religion <- countrycode::codelist %>% 
-  select(country.name.en, cowc) %>% 
-  rename(Country = country.name.en) %>% 
-  right_join(alcool_brut, by = "Country") %>% 
+#Jointure entre jeu de données alcool et religion
+alcool_religion <- countrycode::codelist %>% #traduction des codes pays
+  select(cowc, iso3c) %>% 
+  rename(Country.Code = iso3c) %>% 
+  right_join(alcool_brut, by = "Country.Code") %>% #jointure du jeu alcool sur iso3c
   rename(name = cowc) %>% 
-  full_join(religion_brut, by = "name") 
+  full_join(religion_brut, by = "name") #jointure du jeu religion sur cowc
 ```
 
 
@@ -56,51 +58,55 @@ alcool_religion <- countrycode::codelist %>%
 ### Graphique A : cartes des religions et de l'alcool
 
 ```{r}
+#on récupère le contour des pays
 world_sf <- map_data("world")
 
 religion_main <- religion_brut %>% 
-  filter(year==2010) %>% 
-  select(name, ends_with("pct"), nonreligpct, -ends_with("genpct"), -sumreligpct,
+  filter(year==2010) %>% #sélection de l'année 2010
+  select(name, ends_with("pct"), -ends_with("genpct"), -sumreligpct,
          hindgenpct, sikhgenpct, shntgenpct, zorogenpct, bahgenpct,
-         taogenpct, confgenpct, anmgenpct) %>% 
+         taogenpct, confgenpct, anmgenpct) %>% #sélection des variables d'intérêt
   pivot_longer(cols = c(ends_with("pct"), nonreligpct), 
                names_to = "religion", values_to = "percent") %>% 
   group_by(name) %>% 
-  filter(percent==max(percent)) %>% 
+  filter(percent==max(percent)) %>% #selection de la religion majoritaire
   mutate(religion = as.factor(religion)) %>% 
-  mutate(religion = fct_recode(religion,
-                               'buddistes' = "budmahpct",
-                               'buddistes' = "budothrpct",
-                               'buddistes' = "budthrpct",
-                               'chrétiens - protestants' = "chrstangpct",
-                               'chrétiens - catholiques' = "chrstcatpct",
-                               'chrétiens - orthodoxes' = "chrstorthpct",
-                               'chrétiens - protestants' = "chrstprotpct",
-                               'chrétiens - autres' = "chrstothrpct",
-                               'musulmans - sunnites' = "islmsunpct",
-                               'musulmans - shiites' = "islmshipct",
-                               'musulmans - autres' = "islmothrpct",
-                               'juifs orthodoxes' = "judorthpct",
-                               'athées' = "nonreligpct",
-                               'animistes' = "anmgenpct",
-                               'hindous' = "hindgenpct",
-                               'shintoistes' = "shntgenpct"
+  mutate(religion = fct_recode(religion, #recodage des religions pour la présentation
+                               'Bouddhistes' = "budmahpct",
+                               'Bouddhistes' = "budothrpct",
+                               'Buddistes' = "budthrpct",
+                               'Chrétiens - protestants' = "chrstangpct",
+                               'Chrétiens - catholiques' = "chrstcatpct",
+                               'Chrétiens - orthodoxes' = "chrstorthpct",
+                               'Chrétiens - protestants' = "chrstprotpct",
+                               'Chrétiens - autres' = "chrstothrpct",
+                               'Musulmans - sunnites' = "islmsunpct",
+                               'Musulmans - shiites' = "islmshipct",
+                               'Musulmans - autres' = "islmibdpct",
+                               'Musulmans - autres' = "islmothrpct",
+                               'Juifs orthodoxes' = "judorthpct",
+                               'Athées' = "nonreligpct",
+                               'Animistes' = "anmgenpct",
+                               'Hindous' = "hindgenpct",
+                               'Shintoistes' = "shntgenpct"
                                ))
 
+#creation d'une palette pour les différents groupes de religion.
+#chrétienté : bleu, islam : vert, autres : du jaune au violet.
 palette_religion = c(
-  `chrétiens - catholiques` = "#00b4ff",
-  `chrétiens - orthodoxes` = "#009eff",
-  `chrétiens - protestants` = "#0066ff",
-  `chrétiens - autres` = "#004fff",
-  `musulmans - sunnites` = "#4d7f17",
-  `musulmans - shiites` = "#6bb120",
-  `musulmans - autres` = "#8ae429",
-  `juifs orthodoxes` = "#ea8611",
-  `buddistes` = "#ffd966",
-  `athées` = "#cc0000",
-  `animistes` = "#7e0f12",
-  `hindous` = "#6a329f",
-  `shintoistes` = "#c90076"
+  `Chrétiens - catholiques` = "#00b4ff",
+  `Chrétiens - orthodoxes` = "#009eff",
+  `Chrétiens - protestants` = "#0066ff",
+  `Chrétiens - autres` = "#004fff",
+  `Musulmans - sunnites` = "#4d7f17",
+  `Musulmans - shiites` = "#6bb120",
+  `Musulmans - autres` = "#8ae429",
+  `Juifs orthodoxes` = "#ea8611",
+  `Bouddhistes` = "#ffd966",
+  `Athées` = "#cc0000",
+  `Animistes` = "#7e0f12",
+  `Hindous` = "#6a329f",
+  `Shintoistes` = "#c90076"
 )
 
 religion_map <- religion_main %>%
@@ -129,9 +135,37 @@ religion_map <- religion_main %>%
   xlab('') + ylab('') +
   theme(axis.text.x = element_blank(),
         axis.text.y = element_blank(),
-        axis.ticks = element_blank()) +
-  ggtitle("Religions majoritaires en 2010 dans le monde") +
-  guides(fill = guide_legend(ncol = 3))
+        axis.ticks = element_blank(),
+        legend.position = 'None',
+        plot.caption = element_text(hjust = 0, size = 6)) +
+  ggtitle("Religions majoritaires en 2010 dans le monde")
+
+
+religion_legend <- religion_main %>%
+  mutate(religion = fct_recode(religion,
+                               "Chrétiens" = 'Chrétiens - protestants',
+                               "Chrétiens" = 'Chrétiens - catholiques',
+                               "Chrétiens" = 'Chrétiens - orthodoxes',
+                               "Chrétiens" = 'Chrétiens - protestants',
+                               "Chrétiens" = 'Chrétiens - autres',
+                               "Musulmans" = 'Musulmans - sunnites',
+                               "Musulmans" = 'Musulmans - shiites',
+                               "Musulmans" = 'Musulmans - autres',
+                               "Musulmans" = 'Musulmans - autres')) %>% 
+  ggplot() +
+  aes(percent, fill = religion) +
+  geom_bar() +
+  scale_fill_manual(values = c(
+    `Chrétiens` = "#009EFF",
+    `Musulmans` = "#76C223",
+    `Juifs orthodoxes` = "#ea8611",
+    `Bouddhistes` = "#ffd966",
+    `Athées` = "#cc0000",
+    `Animistes` = "#7e0f12",
+    `Hindous` = "#6a329f",
+    `Shintoistes` = "#c90076"),
+    name = '')
+
 
 alcool_map <- alcool_brut %>% 
   select(Country.Code, Country.Name, X2010, Indicator.Name) %>% 
@@ -160,7 +194,8 @@ alcool_map <- alcool_brut %>%
   geom_polygon(aes(fill = alcool_consum, x = long, y = lat, group = group)) +
   coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80)) +
   viridis::scale_fill_viridis(option = 'H', begin = 0.4,
-                              name = "En litre d'alcool pur par habitant de plus de 15 ans.",
+                              name = "En litre d'alcool pur par 
+habitant de plus de 15 ans.",
                               breaks = c(5,10,15),
                               labels = c('5L', '10L', '15L')) +
     xlab('') + ylab('') +
@@ -169,8 +204,13 @@ alcool_map <- alcool_brut %>%
         axis.ticks = element_blank()) +
   ggtitle("Consommation d'alcool en 2010 dans le monde") 
 
-greligion <- ggplotGrob(religion_map)
-galcool <- ggplotGrob(alcool_map)
+alcool_legend <- alcool_map
+
+alcool_map <- alcool_map + theme(legend.position = 'None')
+
+greligion <- ggplotGrob(plot_grid(religion_map, get_legend(religion_legend)))
+galcool <- ggplotGrob(plot_grid(alcool_map, get_legend(alcool_legend)))
+
 grid::grid.newpage()
 grid::grid.draw(rbind(greligion, galcool))
 
