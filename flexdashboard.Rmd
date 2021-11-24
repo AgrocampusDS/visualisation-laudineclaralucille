@@ -36,6 +36,7 @@ library(maps)
 library(gridExtra)
 library(gtable)
 library(cowplot)
+library(ggpubr)
 ```
 
 Importation des données et chargement des packages
