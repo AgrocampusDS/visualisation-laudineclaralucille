@@ -43,12 +43,13 @@ library(ggpubr)
 # Importation des trois jeux de données brutes : 
 religion_brut <- read.csv("WRP national data.csv")
 alcool_brut <- read.csv("DATAWORLD.csv", sep = ';')
+alcool_happiness <- read.csv("HappinessAlcoholConsumption.csv")
 
 #Jointure entre jeu de données alcool et religion
 alcool_religion <- countrycode::codelist %>% #traduction des codes pays
-  select(cowc, iso3c) %>% 
-  rename(Country.Code = iso3c) %>% 
-  right_join(alcool_brut, by = "Country.Code") %>% #jointure du jeu alcool sur iso3c
+  select(country.name.en, cowc) %>% 
+  rename(Country = country.name.en) %>% 
+  right_join(alcool_happiness, by = "Country") %>% #jointure du jeu alcool sur les pays
   rename(name = cowc) %>% 
   full_join(religion_brut, by = "name") #jointure du jeu religion sur cowc
 ```
@@ -56,7 +57,7 @@ alcool_religion <- countrycode::codelist %>% #traduction des codes pays
 Cartes
 =======================================================================
 
-### Religions majoritaires et consommation d'alcool à travers le monde
+# Religions majoritaires et consommation d'alcool à travers le monde
 
 ```{r}
 #on récupère le contour des pays
@@ -139,7 +140,7 @@ religion_map <- religion_main %>%
         axis.text.y = element_blank(),
         axis.ticks = element_blank(),
         legend.position = 'None') + #enlever la légende 
-  ggtitle("Religions majoritaires en 2010 dans le monde") #titre
+  ggtitle("Religions majoritaires en 2010") #titre
 
 #créer la légende du graphique des religions majoritaires
 religion_legend <- religion_main %>%
@@ -203,7 +204,7 @@ habitant de plus de 15 ans.",
   theme(axis.text.x = element_blank(), #ajustement des axes
         axis.text.y = element_blank(),
         axis.ticks = element_blank()) +
-  ggtitle("Consommation d'alcool en 2010 dans le monde") #titre
+  ggtitle("Consommation d'alcool en 2010") #titre
 
 alcool_legend <- alcool_map #récupérer la légende du graphe
 
@@ -217,10 +218,13 @@ grid::grid.draw(rbind(greligion, galcool))
 
 ```
 
+### Chrétiens : catholiques, protestants, orthodoxes et autres.
+### Musulmans : sunnites, chiites et autres.
+
 Boxplots - religions
 =======================================================================
 
-### Consommation d'alcool en fonction des 4 grandes religions : Christianisme, Islamisme, Athéisme et Bouddhisme
+# Consommation d'alcool en fonction des 4 grandes religions : Christianisme, Islamisme, Athéisme et Bouddhisme
 
 ```{r}
 conso_religions_majoritaires <- alcool_religion %>% 
