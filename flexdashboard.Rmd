@@ -1,6 +1,6 @@
 ---
-title: "Un joli titre pour le dashboard"
-author: "Marie-Pierre Etienne"
+title: "Religions et consommation d'alcool"
+author: "Clara Gougeon, Lucille Caradec et Laudine Bertrand"
 output: 
   flexdashboard::flex_dashboard:
     theme: bootstrap
@@ -8,8 +8,6 @@ output:
     vertical_layout: fill
     navbar:
       - { title: "Moodle", href: "https://tice.agrocampus-ouest.fr/course/view.php?id=6726", align: left }
-      - { icon: "fa-twitter", href: "https://twitter.com/marie_etienne", align: right }
-      - { icon: "fa-linkedin", href: "https://www.linkedin.com/in/marie-etienne-818a7115/", align: right }
 params:
   setup_path: ../resources/
 ---
@@ -27,6 +25,7 @@ color:black!important;
 
 
 ```{r setup, include=FALSE}
+# Chargement des packages 
 library(flexdashboard)
 library(tidyverse)
 library(ggplot2)
@@ -35,13 +34,15 @@ library(sf)
 library(maps)
 library(dplyr)
 library(highcharter) 
+library(mapproj)
 ```
 
-Importation des données et chargement des packages
-
-```{r data}
+```{r data, include=FALSE}
+# Importation des trois jeux de données brutes : 
 religion_brut <- read.csv("WRP national data.csv")
 alcool_brut <- read.csv("HappinessAlcoholConsumption.csv")
+
+# Jointures entre les jeux de données
 alcool_religion <- countrycode::codelist %>% 
   select(country.name.en, cowc) %>% 
   rename(Country = country.name.en) %>% 
@@ -50,16 +51,14 @@ alcool_religion <- countrycode::codelist %>%
   full_join(religion_brut, by = "name") 
 ```
 
-<<<<<<< HEAD
+Cartes
+=======================================================================
 
-### Graphiques A : Religions et consommation d'alcool à travers le monde
-
-### Graphique A : cartes des religions et de l'alcool
+### Religions majoritaires et consommation d'alcool à travers le monde
 
 ```{r}
 world_sf <- map_data("world")
 
->>>>>>> 2210c79ffbe45c7f8d687efc2751b0c64be7bccf
 religion_main <- religion_brut %>% 
   filter(year==2010) %>% 
   select(name, ends_with("pct"), nonreligpct, -ends_with("genpct"), -sumreligpct,
@@ -88,10 +87,7 @@ religion_main <- religion_brut %>%
                                'hindous' = "hindgenpct",
                                'shintoistes' = "shntgenpct"
                                ))
-<<<<<<< HEAD
-=======
 
->>>>>>> 2210c79ffbe45c7f8d687efc2751b0c64be7bccf
 palette_religion = c(
   `chrétiens - catholiques` = "#00b4ff",
   `chrétiens - orthodoxes` = "#009eff",
@@ -107,10 +103,7 @@ palette_religion = c(
   `hindous` = "#6a329f",
   `shintoistes` = "#c90076"
 )
-<<<<<<< HEAD
-=======
 
->>>>>>> 2210c79ffbe45c7f8d687efc2751b0c64be7bccf
 religion_map <- religion_main %>%
   rename(cowc = name) %>% 
   full_join(countrycode::codelist, by = "cowc") %>% 
@@ -140,152 +133,101 @@ religion_map <- religion_main %>%
         axis.ticks = element_blank()) +
   ggtitle("Religions majoritaires dans le monde") 
 
-library(plotly)
-
+religion_map
 ```
 
+Boxplots - religions
+=======================================================================
 
-### Graphique B
-
-Graphique de la consommation de Bière, Vin et Spiritueux en fonction de la religion (majoritaire dans chaque pays)
+### Consommation d'alcool en fonction des 4 grandes religions : Christianisme, Islamisme, Athéisme et Bouddhisme
 
 ```{r}
-data <- alcool_religion
-religion_main <- data %>% 
-  select(Country,ends_with("PerCapita"), ends_with("_percent")) %>% 
-  select(-total_percent) %>% 
-  pivot_longer(cols = ends_with("_percent"), names_to = "religion", values_to = "percent") %>% 
+conso_religions_majoritaires <- alcool_religion %>% 
+    select(Country, ends_with("PerCapita"), -GDP_PerCapita, chrstprotpct, chrstcatpct, chrstorthpct, chrstangpct, chrstothrpct, budgenpct, islmgenpct, nonreligpct) %>%
+  pivot_longer(cols = ends_with("pct"), names_to = "religion", values_to = "percent") %>% 
   group_by(Country) %>% 
-  filter(percent==max(percent)) %>% 
-  separate(religion, c("main", 'suffix'), sep = '_') %>% 
-  select(-suffix) %>% 
-  group_by(main) %>% 
-  mutate(n = n()) %>% 
-  filter(n>1) %>% 
-  select(-n) %>% 
-  mutate(main = as.factor(main)) %>%
-  pivot_longer(cols = 3:5, names_to = "Type" ) %>%
+  filter(percent==max(percent)) %>%
+  mutate(religion = as.factor(religion)) %>% 
+  mutate(religion = fct_recode(religion,
+                               'Bouddhistes' = "budgenpct",
+                               'Chrétiens' = "chrstangpct",
+                               'Chrétiens' = "chrstcatpct",
+                               'Chrétiens' = "chrstorthpct",
+                               'Chrétiens' = "chrstprotpct",
+                               'Chrétiens' = "chrstothrpct",
+                               'Musulmans' = "islmgenpct",
+                               'Athées' = "nonreligpct"
+                               )) %>%
+  pivot_longer(cols = 2:4, names_to = "Type" ) %>%
   mutate(Type = as.factor(Type)) 
 
-graph2 <- ggplot(data = religion_main)+
-  aes(x=main, y=value, fill = Type)+
-  geom_boxplot(outlier.shape=NA)+
-  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred")) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
-  theme(legend.position="top") + 
-  scale_x_discrete(limits=c("sunni", "islam", "buddhism","christianity","noreligion"))
-graph2
+graph_religions <- ggplot(data = conso_religions_majoritaires) 
+graph_religions <- graph_religions + aes(x=religion, y=value, fill = Type) 
+graph_religions <- graph_religions + geom_hline(yintercept = 100, col = "black", linetype="dashed")
+graph_religions <- graph_religions + geom_hline(yintercept = 200, col = "black", linetype="dashed")
+graph_religions <- graph_religions + geom_hline(yintercept = 300, col = "black", linetype="dashed")
+graph_religions <- graph_religions + geom_boxplot(outlier.shape=NA) 
+graph_religions <- graph_religions +  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"),name = "Type d'alcool", labels = c("Bière", "Spiritueux", "Vin"))
+graph_religions <- graph_religions + theme(plot.margin = unit(c(1,1,1,1), "lines"))
+graph_religions <- graph_religions + theme(axis.text.x = element_text(angle = 65, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 1, linetype = "solid"),axis.text.y = element_text(size=10))
+graph_religions <- graph_religions + theme(legend.position="bottom") 
+graph_religions <- graph_religions + labs(x="",y="",title="Représentation de la consommation d'alcool par habitant \nen fonction des religions majoritaires",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")
+graph_religions <- graph_religions + theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))
+graph_religions <- graph_religions + scale_x_discrete(limits=c("Chrétiens","Musulmans","Bouddhistes", "Athées"))
+graph_religions <- graph_religions + scale_y_continuous(labels=c("0 L","100 L","200 L","300 L","400 L"))
+graph_religions <- graph_religions + annotate("rect", xmin = c(0.55,1.55,2.55,3.55), xmax = c(1.45,2.45,3.45,4.45), ymin = -5, ymax = 410, fill = c("#009eff","#4d7f17","#ffd966","#cc0000"), alpha = 0.1) 
+graph_religions <- graph_religions + theme(panel.background = element_rect(fill = "white",size = 2))
+graph_religions 
 ```
 
-### Graphique C
+Boxplots - Christianisme 
+=======================================================================
+
+### Zoom : Consommation d'alcool en fonction des 4 sous-religions du Christianisme : Catholicisme, Protestantisme, Christianisme orthodoxe, et autres Christianismes.
 
 ```{r}
-data <- read.delim("~/Agro/5A/Visualisation de donnees/Projet/alcool_religion.csv", sep = ";", dec=".")
-data_islam <- data %>%
-  select(starts_with("Beer"),starts_with("Spirit"), starts_with("Wine"), ends_with(("islam_percent"))) %>% 
-  rename(Beer = Beer_PerCapita) %>% 
-  rename(Spirit = Spirit_PerCapita) %>% 
-  rename(Wine = Wine_PerCapita) %>% 
-  pivot_longer(cols = 1:3, names_to = "Type" ) %>%
-  mutate(Type = as.factor(Type))
+conso_christianisme <- alcool_religion %>% 
+    select(Country, ends_with("PerCapita"), -GDP_PerCapita, chrstprotpct, chrstcatpct, chrstorthpct, chrstangpct, chrstothrpct) %>%
+  pivot_longer(cols = ends_with("pct"), names_to = "religion", values_to = "percent") %>% 
+  group_by(Country) %>% 
+  filter(percent==max(percent)) %>%
+  mutate(religion = as.factor(religion)) %>% 
+  mutate(religion = fct_recode(religion,
+                               'Protestants' = "chrstangpct",
+                               'Catholiques' = "chrstcatpct",
+                               'Orthodoxes' = "chrstorthpct",
+                               'Protestants' = "chrstprotpct",
+                               'Autres' = "chrstothrpct"
+                               )) %>%
+  pivot_longer(cols = 2:4, names_to = "Type" ) %>%
+  mutate(Type = as.factor(Type)) 
 
-graph3 <-ggplot(data=data_islam, aes(x=islam_percent, y= value, color=Type)) +
-  geom_point()+
-  geom_smooth(method=lm, se=FALSE, fullrange=TRUE)+
-  scale_color_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"))
-graph3
-
-data_athe <- data %>%
-  select(starts_with("Beer"),starts_with("Spirit"), starts_with("Wine"), ends_with(("noreligion_percent"))) %>% 
-  rename(Beer = Beer_PerCapita) %>% 
-  rename(Spirit = Spirit_PerCapita) %>% 
-  rename(Wine = Wine_PerCapita) %>% 
-  pivot_longer(cols = 1:3, names_to = "Type" ) %>%
-  mutate(Type = as.factor(Type))
-
-
-graph5 <-ggplot(data=data_athe, aes(x=noreligion_percent, y= value, color=Type)) +
-  geom_point()+
-  geom_smooth(method=lm, se=FALSE, fullrange=TRUE)+
-  scale_color_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"))
-graph5
-
-data_catho <- data %>%
-  select(starts_with("Beer"),starts_with("Spirit"), starts_with("Wine"), ends_with(("christianity_percent"))) %>% 
-  rename(Beer = Beer_PerCapita) %>% 
-  rename(Spirit = Spirit_PerCapita) %>% 
-  rename(Wine = Wine_PerCapita) %>% 
-  pivot_longer(cols = 1:3, names_to = "Type" ) %>%
-  mutate(Type = as.factor(Type))
+graph_christ <- ggplot(data = conso_christianisme) 
+graph_christ <- graph_christ + aes(x=religion, y=value, fill = Type) 
+graph_christ <- graph_christ + geom_hline(yintercept = 100, col = "black", linetype="dashed")
+graph_christ <- graph_christ + geom_hline(yintercept = 200, col = "black", linetype="dashed")
+graph_christ <- graph_christ + geom_hline(yintercept = 300, col = "black", linetype="dashed")
+graph_christ <- graph_christ + geom_boxplot(outlier.shape=NA) 
+graph_christ <- graph_christ +  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"),name = "Type d'alcool", labels = c("Bière", "Spiritueux", "Vin"))
+graph_christ <- graph_christ + theme(plot.margin = unit(c(1,1,1,1), "lines"))
+graph_christ <- graph_christ + theme(axis.text.x = element_text(angle = 65, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 1, linetype = "solid"),axis.text.y = element_text(size=10))
+graph_christ <- graph_christ + theme(legend.position="bottom") 
+graph_christ <- graph_christ + labs(x="",y="",title="Représentation de la consommation d'alcool par habitant \nen fonction des sous-religions du christianisme",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")
+graph_christ <- graph_christ + theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))
+graph_christ <- graph_christ + scale_x_discrete(limits=c("Catholiques","Orthodoxes", "Protestants","Autres"))
+graph_christ <- graph_christ + scale_y_continuous(labels=c("0 L","100 L","200 L","300 L","400 L"))
+graph_christ <- graph_christ + annotate("rect", xmin = c(0.55,1.55,2.55,3.55), xmax = c(1.45,2.45,3.45,4.45), ymin = -5, ymax = 410, fill = c("#00b4ff","#009eff","#0066ff","#004fff"), alpha = 0.1) 
+graph_christ <- graph_christ + theme(panel.background = element_rect(fill = "white",size = 2))
 
 
-graph6 <-ggplot(data=data_catho, aes(x=christianity_percent, y= value, color=Type)) +
-  geom_point()+
-  geom_smooth(method=lm, se=FALSE, fullrange=TRUE)+
-  scale_color_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"))
-graph6
-
-#Test d'un graphique avec les différents courant de l'islam
-data_islam2 <- data %>% 
-  select(Country, ends_with("PerCapita"), starts_with("islam"), population)%>%
-  select(-c(islam_all, islam_percent, islam_other)) %>% 
-  mutate(Conso_Beer = Beer_PerCapita/100*population) %>% 
-  mutate(Conso_Wine = Wine_PerCapita/100*population) %>% 
-  mutate(Conso_Spirit = Spirit_PerCapita/100*population) %>% 
-  mutate(Conso_totale = Conso_Spirit+Conso_Wine+Conso_Beer) %>% 
-  pivot_longer(cols = starts_with("islam"), names_to = "Type" ) %>%
-  mutate(Type = as.factor(Type))
-
-graph4 <-ggplot(data=data_islam2, aes(x=Conso_totale, y= value, color=Type)) +
-  geom_smooth(method=lm, se=FALSE, fullrange=TRUE)
-graph4 
+graph_christ
 ```
 
+Graphique à finir
+=======================================================================
 
-<!-- Column {data-width=650} -->
-<!-- ----------------------------------------------------------------------- -->
+### Graphique C : 
 
-<!-- ### An easy solution for dashboard -->
-
-<!-- ```{r, echo = TRUE} -->
-<!-- #install.package('flexdasboard') -->
-<!-- #rmarkdown::draft("dashboard.Rmd", template = "flex_dashboard", package = "flexdashboard") -->
-<!-- ``` -->
-
-<!-- The [flexdashboard website](https://rmarkdown.rstudio.com/flexdashboard/index.html) provides multiple advanced examples. -->
-
-<!-- ### Some static graph -->
-
-<!-- ```{r data, eval = TRUE, echo = FALSE, results='hide', message = FALSE, warning=FALSE} -->
-<!-- n <- 100 -->
-<!-- dta <- tibble(size = round(rnorm(n, mean = 0, sd =10),2),  -->
-<!--            color = sample(x= c('Blue', 'Yellow'), size = n, replace = TRUE)) -->
-
-<!-- ``` -->
-
-
-<!-- ```{r graph_static,  echo = FALSE,  message = FALSE, warning=FALSE} -->
-<!-- p1 <- dta %>% ggplot() + -->
-<!--   aes(x=color, y = size) + -->
-<!--   geom_boxplot(aes(fill= color)) -->
-<!-- p1 -->
-<!-- ``` -->
-
-<!-- Column {.tabset .tabset-fade} -->
-<!-- ----------------------------------------------------------------------- -->
-
-
-<!-- ### Some dynamic maps -->
-
-<!-- ```{r  ggplotly, echo = TRUE,  eval = TRUE,  message = FALSE, warning=FALSE} -->
-<!-- plotly::ggplotly(p1) -->
-<!-- ``` -->
-
-
-
-<!-- ### Chart C -->
-
-<!-- ```{r} -->
-
-<!-- ``` -->
-
+```{r}
+print("Ca marche")
+```
