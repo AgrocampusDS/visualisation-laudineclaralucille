@@ -109,13 +109,14 @@ palette_religion = c(
   `Shintoistes` = "#c90076"
 )
 
+#création de la carte des religions majoritaires
 religion_map <- religion_main %>%
   rename(cowc = name) %>% 
-  full_join(countrycode::codelist, by = "cowc") %>% 
+  full_join(countrycode::codelist, by = "cowc") %>% #jointure avec countrycode
   select(country.name.en, religion, percent, cowc) %>% 
   rename(region = country.name.en) %>% 
   mutate(region = as.factor(region)) %>% 
-  mutate(region = fct_recode(region,
+  mutate(region = fct_recode(region, #recodage des pays pour coller avec world_sf
                              "USA" = "United States",
                              "UK" = "United Kingdom",
                              "Antigua" = "Antigua & Barbuda",
@@ -126,23 +127,22 @@ religion_map <- religion_main %>%
                             "Czech Republic" = "Czechia",
                             "Myanmar" = "Myanmar (Burma)"
                              )) %>% 
-  full_join(world_sf, by = 'region') %>% 
+  full_join(world_sf, by = 'region') %>% #jointure avec world_sf
   ggplot() +
   aes(fill = religion, x = long, y = lat, group = group) +
   geom_polygon() +
-  coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80)) +
-  scale_fill_manual(values = palette_religion, name = '') +
+  coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80)) + #ajustement des coordonnées
+  scale_fill_manual(values = palette_religion, name = '') + #palette graphique personnalisée
   xlab('') + ylab('') +
-  theme(axis.text.x = element_blank(),
+  theme(axis.text.x = element_blank(), #ajustement des axes
         axis.text.y = element_blank(),
         axis.ticks = element_blank(),
-        legend.position = 'None',
-        plot.caption = element_text(hjust = 0, size = 6)) +
-  ggtitle("Religions majoritaires en 2010 dans le monde")
+        legend.position = 'None') + #enlever la légende 
+  ggtitle("Religions majoritaires en 2010 dans le monde") #titre
 
-
+#créer la légende du graphique des religions majoritaires
 religion_legend <- religion_main %>%
-  mutate(religion = fct_recode(religion,
+  mutate(religion = fct_recode(religion, #recodage pour supprimer des sous-religions
                                "Chrétiens" = 'Chrétiens - protestants',
                                "Chrétiens" = 'Chrétiens - catholiques',
                                "Chrétiens" = 'Chrétiens - orthodoxes',
@@ -155,7 +155,7 @@ religion_legend <- religion_main %>%
   ggplot() +
   aes(percent, fill = religion) +
   geom_bar() +
-  scale_fill_manual(values = c(
+  scale_fill_manual(values = c( #palette personnalisée
     `Chrétiens` = "#009EFF",
     `Musulmans` = "#76C223",
     `Juifs orthodoxes` = "#ea8611",
@@ -166,19 +166,19 @@ religion_legend <- religion_main %>%
     `Shintoistes` = "#c90076"),
     name = '')
 
-
+#création de la carte de consommation d'alcool
 alcool_map <- alcool_brut %>% 
   select(Country.Code, Country.Name, X2010, Indicator.Name) %>% 
   mutate(Indicator.Name = as.factor(Indicator.Name)) %>% 
-  mutate(Indicator.Name = fct_recode(Indicator.Name,
+  mutate(Indicator.Name = fct_recode(Indicator.Name, #recodage des noms de facteur
                                      'alcool_consum' = "Total alcohol consumption per capita (liters of pure alcohol, projected estimates, 15+ years of age)")) %>% 
-  pivot_wider(names_from = Indicator.Name, values_from = X2010) %>% 
+  pivot_wider(names_from = Indicator.Name, values_from = X2010) %>% #creation d'une nouvelle variable : consommation d'alcool en 2010
   rename(iso3c = Country.Code) %>% 
-  right_join(countrycode::codelist, by = "iso3c") %>% 
-  select(country.name.en, alcool_consum) %>% 
+  right_join(countrycode::codelist, by = "iso3c") %>% #jointure avec countrycode
+  select(country.name.en, alcool_consum) %>% #selection du nom de pays et conso d'alcool
   rename(region = country.name.en) %>% 
   mutate(region = as.factor(region)) %>% 
-  mutate(region = fct_recode(region,
+  mutate(region = fct_recode(region, #recodage des pays pour coller avec world_sf
                              "USA" = "United States",
                              "UK" = "United Kingdom",
                              "Antigua" = "Antigua & Barbuda",
@@ -189,24 +189,24 @@ alcool_map <- alcool_brut %>%
                             "Czech Republic" = "Czechia",
                             "Myanmar" = "Myanmar (Burma)"
                              )) %>% 
-  full_join(world_sf, by = 'region') %>% 
+  full_join(world_sf, by = 'region') %>% #jointure avec world_sf
   ggplot() +
   geom_polygon(aes(fill = alcool_consum, x = long, y = lat, group = group)) +
-  coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80)) +
-  viridis::scale_fill_viridis(option = 'H', begin = 0.4,
+  coord_map("mercator", xlim = c(-180,180), ylim = c(-55, 80)) + #ajustement des coordonnées de la carte
+  viridis::scale_fill_viridis(option = 'H', begin = 0.4, #palette personnalisée : du vert au rouge
                               name = "En litre d'alcool pur par 
 habitant de plus de 15 ans.",
                               breaks = c(5,10,15),
                               labels = c('5L', '10L', '15L')) +
     xlab('') + ylab('') +
-  theme(axis.text.x = element_blank(),
+  theme(axis.text.x = element_blank(), #ajustement des axes
         axis.text.y = element_blank(),
         axis.ticks = element_blank()) +
-  ggtitle("Consommation d'alcool en 2010 dans le monde") 
+  ggtitle("Consommation d'alcool en 2010 dans le monde") #titre
 
-alcool_legend <- alcool_map
+alcool_legend <- alcool_map #récupérer la légende du graphe
 
-alcool_map <- alcool_map + theme(legend.position = 'None')
+alcool_map <- alcool_map + theme(legend.position = 'None') #supprimer la légende de la carte
 
 greligion <- ggplotGrob(plot_grid(religion_map, get_legend(religion_legend)))
 galcool <- ggplotGrob(plot_grid(alcool_map, get_legend(alcool_legend)))
