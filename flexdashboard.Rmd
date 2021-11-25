@@ -317,7 +317,6 @@ christ <-ggplot(data_graph3, aes(x = chrstgenpct, y = Conso_totale)) +
   theme(axis.text.x = element_text(angle = 30, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 0.8, linetype = "solid"),axis.text.y = element_text(size=10))+
   scale_y_continuous(labels=c("0L","200L","400L","600L"))+
   scale_x_continuous(labels=c("0%","25%","50%","75%", "100%"))
-christ
 
 islam <-ggplot(data_graph3, aes(x = islmgenpct, y = Conso_totale)) + 
   geom_point(aes(color = courant_maj_islam), alpha = 1.2) +
@@ -332,7 +331,6 @@ islam <-ggplot(data_graph3, aes(x = islmgenpct, y = Conso_totale)) +
   theme(axis.text.x = element_text(angle = 30, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 0.8, linetype = "solid"),axis.text.y = element_text(size=10))+
   scale_y_continuous(labels=c("0L","200L","400L","600L"))+
   scale_x_continuous(labels=c("0%","25%","50%","75%", "100%"))
-islam
 
 grid.arrange(christ, islam)
 ```
