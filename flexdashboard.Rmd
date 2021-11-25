@@ -376,7 +376,7 @@ islam <-ggplot(data_graph3, aes(x = islmgenpct, y = Conso_totale)) +
   scale_y_continuous(labels=c("0L","200L","400L","600L"))+
   scale_x_continuous(labels=c("0%","25%","50%","75%", "100%"))
 
-grid.arrange(christ, islam)
+grid.arrange(christ, islam, nrow =2)
 ```
 
 Vue d'ensemble
