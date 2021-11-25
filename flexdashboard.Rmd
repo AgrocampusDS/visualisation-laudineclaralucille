@@ -200,7 +200,7 @@ data_graph3 <- alcool_religion %>%
   mutate (courant_maj_chrst = ifelse(maj_chrst == chrstcatpct,"Catholique", ifelse(maj_chrst == chrstorthpct, "Orthodoxe", ifelse(maj_chrst== chrstothrpct, "Autres", "Protestant")) )) %>% 
   mutate(courant_maj_chrst = as.factor(courant_maj_chrst)) %>% 
   mutate(maj_islam = pmax (islmsunpct,islmshipct,islmibdpct, islmnatpct,islmalwpct,islmahmpct, islmothrpct)) %>% 
-  mutate (courant_maj_islam = ifelse(maj_islam == islmsunpct,"Sunnites", ifelse(maj_islam == islmshipct, "Shiites", "Autres"))) %>% 
+  mutate (courant_maj_islam = ifelse(maj_islam == islmsunpct,"Sunnite", ifelse(maj_islam == islmshipct, "Chiite", "Autres"))) %>% 
   mutate (courant_maj_islam = as.factor(courant_maj_islam)) %>% 
   mutate(Conso_totale = Beer_PerCapita + Wine_PerCapita + Spirit_PerCapita) %>%
   mutate (conso_max = pmax(Beer_PerCapita,Wine_PerCapita,Spirit_PerCapita)) %>% 
@@ -209,25 +209,33 @@ data_graph3 <- alcool_religion %>%
   mutate (islmgenpct = islmgenpct*100)
 
 christ <-ggplot(data_graph3, aes(x = chrstgenpct, y = Conso_totale)) + 
-  geom_point(aes(color = courant_maj_chrst), alpha = 0.5) +
+  geom_point(aes(color = courant_maj_chrst), alpha = 1.2) +
   geom_smooth(method=lm, se = FALSE)+
-  scale_color_manual(values = c("#E7B800","#00AFBB", "#004fff", "#0066ff"), name = "Courant majoritaire")+
+  scale_color_manual(values = c("#00b4ff","#0066ff", "#009eff", "#004fff"), name = "Courant majoritaire", limits = c("Catholique", "Protestant", "Orthodoxe", "Autres"))+
   theme_minimal()+
-  xlab("Proportion de musulmans dans le pays")+
-  ylab("")+
-  stat_regline_equation(label.y = 570, label.x = 10, aes(label = ..rr.label..))+
-  ggtitle("Consommation d'alcool dans le monde vu au niveau des 2 religions majoritaires ")
+  labs (x ="Proportion de chrétiens dans le pays", y ="", title = "Consommation d'alcool dans le monde", subtitle = "Zoom sur les 2 religions principales")+
+  theme_classic()+
+  stat_regline_equation(label.y = 550, label.x = 30, aes(label = ..rr.label..))+
+  theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))+
+  theme(plot.margin = unit(c(1,1,1,1), "lines"))+
+  theme(axis.text.x = element_text(angle = 30, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 0.8, linetype = "solid"),axis.text.y = element_text(size=10))+
+  scale_y_continuous(labels=c("0L","200L","400L","600L"))+
+  scale_x_continuous(labels=c("0%","25%","50%","75%", "100%"))
 christ
 
 islam <-ggplot(data_graph3, aes(x = islmgenpct, y = Conso_totale)) + 
-  geom_point(aes(color = courant_maj_islam), alpha = 0.5) +
+  geom_point(aes(color = courant_maj_islam), alpha = 1.2) +
   geom_smooth(method=lm, se = FALSE, color = "#4d7f17")+
-  scale_color_manual(values = c("#4d7f17","#6bb120", "#8ae429"), name = "Courant majoritaire")+
-  theme_minimal()+
+  scale_color_manual(values = c("#4d7f17","#6bb120", "#8ae429"), name = "Courant majoritaire", limits = c("Chiite", "Sunnite", "Autres"))+
+  theme_classic()+
   xlab("Proportion de musulmans dans le pays")+
   ylab("")+
-  stat_regline_equation(label.y = 550, label.x = 60, aes(label = ..rr.label..))+
-  theme(axis.ticks = element_blank())
+  stat_regline_equation(label.y = 550, label.x = 30, aes(label = ..rr.label..))+
+  theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))+
+  theme(plot.margin = unit(c(1,1,1,1), "lines"))+
+  theme(axis.text.x = element_text(angle = 30, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 0.8, linetype = "solid"),axis.text.y = element_text(size=10))+
+  scale_y_continuous(labels=c("0L","200L","400L","600L"))+
+  scale_x_continuous(labels=c("0%","25%","50%","75%", "100%"))
 islam
 
 grid.arrange(christ, islam)
