@@ -220,13 +220,16 @@ grid::grid.draw(rbind(greligion, galcool))
 
 ```
 
-> Le groupe des chrétiens regroupe les orthodoxes, catholiques, protestants et autres.
-> Le groupe des musulmans regroupe les sunnites, chiites, ibadi et autres.
+> **\* Le groupe des chrétiens regroupe les catholiques, les orthodoxes, les protestants et les autres.**
+> **Le groupe des musulmans regroupe les sunnites, les chiites, les ibadites et les autres.**
 
-Boxplots - religions
+Boxplots 
 =======================================================================
 
-### Consommation d'alcool en fonction des 4 grandes religions : Christianisme, Islamisme, Athéisme et Bouddhisme
+Row {.tabset .tabset-fade}
+-------------------------------------
+   
+### Consommation d'alcool en fonction des religions principales
 
 ```{r}
 conso_religions_majoritaires <- alcool_religion %>% 
@@ -258,7 +261,7 @@ graph_religions <- graph_religions +  scale_fill_manual(values=c("darkgoldenrod1
 graph_religions <- graph_religions + theme(plot.margin = unit(c(1,1,1,1), "lines"))
 graph_religions <- graph_religions + theme(axis.text.x = element_text(angle = 65, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 1, linetype = "solid"),axis.text.y = element_text(size=10))
 graph_religions <- graph_religions + theme(legend.position="bottom") 
-graph_religions <- graph_religions + labs(x="",y="",title="Représentation de la consommation d'alcool par habitant \nen fonction des religions majoritaires",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")
+graph_religions <- graph_religions + labs(x="",y="",title="Représentation de la consommation d'alcool par habitant \nen fonction des religions principales",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")
 graph_religions <- graph_religions + theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))
 graph_religions <- graph_religions + scale_x_discrete(limits=c("Chrétiens","Musulmans","Bouddhistes", "Athées"))
 graph_religions <- graph_religions + scale_y_continuous(labels=c("0 L","100 L","200 L","300 L","400 L"))
@@ -267,10 +270,50 @@ graph_religions <- graph_religions + theme(panel.background = element_rect(fill 
 graph_religions 
 ```
 
-Boxplots - Christianisme 
+### Consommation d'alcool en fonction des sous-religions du Christianisme
+
+```{r}
+conso_christianisme <- alcool_religion %>% 
+    select(Country, ends_with("PerCapita"), -GDP_PerCapita, chrstprotpct, chrstcatpct, chrstorthpct, chrstangpct, chrstothrpct) %>%
+  pivot_longer(cols = ends_with("pct"), names_to = "religion", values_to = "percent") %>% 
+  group_by(Country) %>% 
+  filter(percent==max(percent)) %>%
+  mutate(religion = as.factor(religion)) %>% 
+  mutate(religion = fct_recode(religion,
+                               'Protestants' = "chrstangpct",
+                               'Catholiques' = "chrstcatpct",
+                               'Orthodoxes' = "chrstorthpct",
+                               'Protestants' = "chrstprotpct",
+                               'Autres' = "chrstothrpct"
+                               )) %>%
+  pivot_longer(cols = 2:4, names_to = "Type" ) %>%
+  mutate(Type = as.factor(Type)) 
+
+graph_christ <- ggplot(data = conso_christianisme) 
+graph_christ <- graph_christ + aes(x=religion, y=value, fill = Type) 
+graph_christ <- graph_christ + geom_hline(yintercept = 100, col = "black", linetype="dashed")
+graph_christ <- graph_christ + geom_hline(yintercept = 200, col = "black", linetype="dashed")
+graph_christ <- graph_christ + geom_hline(yintercept = 300, col = "black", linetype="dashed")
+graph_christ <- graph_christ + geom_boxplot(outlier.shape=NA) 
+graph_christ <- graph_christ +  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"),name = "Type d'alcool", labels = c("Bière", "Spiritueux", "Vin"))
+graph_christ <- graph_christ + theme(plot.margin = unit(c(1,1,1,1), "lines"))
+graph_christ <- graph_christ + theme(axis.text.x = element_text(angle = 65, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 1, linetype = "solid"),axis.text.y = element_text(size=10))
+graph_christ <- graph_christ + theme(legend.position="bottom") 
+graph_christ <- graph_christ + labs(x="",y="",title="Représentation de la consommation d'alcool par habitant \nen fonction des sous-religions du christianisme",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")
+graph_christ <- graph_christ + theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))
+graph_christ <- graph_christ + scale_x_discrete(limits=c("Catholiques","Orthodoxes", "Protestants","Autres"))
+graph_christ <- graph_christ + scale_y_continuous(labels=c("0 L","100 L","200 L","300 L","400 L"))
+graph_christ <- graph_christ + annotate("rect", xmin = c(0.55,1.55,2.55,3.55), xmax = c(1.45,2.45,3.45,4.45), ymin = -5, ymax = 410, fill = c("#00b4ff","#009eff","#0066ff","#004fff"), alpha = 0.1) 
+graph_christ <- graph_christ + theme(panel.background = element_rect(fill = "white",size = 2))
+
+graph_christ
+```
+
+
+Régression linéaire
 =======================================================================
 
-### Zoom : Consommation d'alcool en fonction des 4 sous-religions du Christianisme : Catholicisme, Protestantisme, Christianisme orthodoxe, et autres Christianismes.
+### Analyse : consommation d'alcool en fonction de la proportion de chrétiens ou musulmans dans chaque pays.
 
 ```{r}
 conso_christianisme <- alcool_religion %>% 
@@ -335,7 +378,33 @@ islam <-ggplot(data_graph3, aes(x = islmgenpct, y = Conso_totale)) +
 grid.arrange(christ, islam)
 ```
 
+Vue d'ensemble
+=======================================================================
 
+Column 
+-------------------------------------
+
+### Religions majoritaires et consommation d'alcool à travers le monde
+
+```{r}
+grid::grid.draw(rbind(greligion, galcool))
+```
+
+Column 
+-------------------------------------
+   
+### Consommation d'alcool en fonction des religions principales
+
+```{r}
+graph_religions 
+```   
+
+### Consommation d'alcool en fonction de la proportion de chrétiens ou musulmans dans chaque pays
+
+```{r}
+christ
+#grid.arrange(christ, islam, nrow = 2)
+```
 
 <!-- Column {data-width=650} -->
 <!-- ----------------------------------------------------------------------- -->
