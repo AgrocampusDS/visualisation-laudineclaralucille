@@ -263,7 +263,7 @@ graph_religions <- ggplot(data = conso_religions_majoritaires) +
   theme(legend.position="bottom") +
   labs(x="",y="",title="Représentation de la consommation d'alcool par habitant \nen fonction des religions principales",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")+
   theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))+
-  scale_x_discrete(limits=c("Chrétiens","Musulmans","Bouddhistes", "Athées"))
+  scale_x_discrete(limits=c("Chrétiens","Musulmans","Bouddhistes", "Athées"))+
   scale_y_continuous(labels=c("0 L","100 L","200 L","300 L","400 L"))+
 graph_religions <- graph_religions + annotate("rect", xmin = c(0.55,1.55,2.55,3.55), xmax = c(1.45,2.45,3.45,4.45), ymin = -5, ymax = 410, fill = c("#009eff","#4d7f17","#ffd966","#cc0000"), alpha = 0.1) +
   theme(panel.background = element_rect(fill = "white",size = 2))
