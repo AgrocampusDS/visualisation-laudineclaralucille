@@ -83,6 +83,7 @@ religion_main <- religion_brut %>%
                                'hindous' = "hindgenpct",
                                'shintoistes' = "shntgenpct"
                                ))
+
 palette_religion = c(
   `chrétiens - catholiques` = "#00b4ff",
   `chrétiens - orthodoxes` = "#009eff",
@@ -128,7 +129,6 @@ religion_map <- religion_main %>%
         axis.text.y = element_blank(),
         axis.ticks = element_blank()) +
   ggtitle("Religions majoritaires dans le monde") 
-
 
 ggplotly(religion_map)
 
