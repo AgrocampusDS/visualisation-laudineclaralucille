@@ -54,10 +54,14 @@ alcool_religion <- countrycode::codelist %>% #traduction des codes pays
   full_join(religion_brut, by = "name") #jointure du jeu religion sur cowc
 ```
 
+<<<<<<< HEAD
 Cartes
 =======================================================================
 
 ### Religions majoritaires et consommation d'alcool à travers le monde
+=======
+### Graphiques A : Religions et consommation d'alcool à travers le monde
+>>>>>>> origin/Clara
 
 ```{r}
 #on récupère le contour des pays
@@ -93,6 +97,7 @@ religion_main <- religion_brut %>%
                                'Shintoistes' = "shntgenpct"
                                ))
 
+
 #creation d'une palette pour les différents groupes de religion.
 #chrétienté : bleu, islam : vert, autres : du jaune au violet.
 palette_religion = c(
@@ -110,6 +115,7 @@ palette_religion = c(
   `Hindous` = "#6a329f",
   `Shintoistes` = "#c90076"
 )
+
 
 #création de la carte des religions majoritaires
 religion_map <- religion_main %>%
@@ -268,6 +274,7 @@ graph_religions
 Boxplots - Christianisme 
 =======================================================================
 
+<<<<<<< HEAD
 ### Zoom : Consommation d'alcool en fonction des 4 sous-religions du Christianisme : Catholicisme, Protestantisme, Christianisme orthodoxe, et autres Christianismes.
 
 ```{r}
@@ -286,6 +293,97 @@ conso_christianisme <- alcool_religion %>%
                                )) %>%
   pivot_longer(cols = 2:4, names_to = "Type" ) %>%
   mutate(Type = as.factor(Type)) 
+
+data_graph3 <- alcool_religion %>%
+  filter(year == 2010) %>% 
+  select(Country,Hemisphere, ends_with ("Capita"), ends_with ("pct")) %>%
+  mutate(maj_chrst = pmax(chrstprotpct,chrstcatpct, chrstorthpct, chrstothrpct)) %>% 
+  mutate (courant_maj_chrst = ifelse(maj_chrst == chrstcatpct,"Catholique", ifelse(maj_chrst == chrstorthpct, "Orthodoxe", ifelse(maj_chrst== chrstothrpct, "Autres", "Protestant")) )) %>% 
+  mutate(courant_maj_chrst = as.factor(courant_maj_chrst)) %>% 
+  mutate(maj_islam = pmax (islmsunpct,islmshipct,islmibdpct, islmnatpct,islmalwpct,islmahmpct, islmothrpct)) %>% 
+  mutate (courant_maj_islam = ifelse(maj_islam == islmsunpct,"Sunnite", ifelse(maj_islam == islmshipct, "Chiite", "Autres"))) %>% 
+  mutate (courant_maj_islam = as.factor(courant_maj_islam)) %>% 
+  mutate(Conso_totale = Beer_PerCapita + Wine_PerCapita + Spirit_PerCapita) %>%
+  mutate (conso_max = pmax(Beer_PerCapita,Wine_PerCapita,Spirit_PerCapita)) %>% 
+  filter(!is.na(Conso_totale)) %>% 
+  mutate (chrstgenpct = chrstgenpct*100) %>% 
+  mutate (islmgenpct = islmgenpct*100)
+
+christ <-ggplot(data_graph3, aes(x = chrstgenpct, y = Conso_totale)) + 
+  geom_point(aes(color = courant_maj_chrst), alpha = 1.2) +
+  geom_smooth(method=lm, se = FALSE)+
+  scale_color_manual(values = c("#00b4ff","#0066ff", "#009eff", "#004fff"), name = "Courant majoritaire", limits = c("Catholique", "Protestant", "Orthodoxe", "Autres"))+
+  theme_minimal()+
+  labs (x ="Proportion de chrétiens dans le pays", y ="", title = "Consommation d'alcool dans le monde", subtitle = "Zoom sur les 2 religions principales")+
+  theme_classic()+
+  stat_regline_equation(label.y = 550, label.x = 30, aes(label = ..rr.label..))+
+  theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))+
+  theme(plot.margin = unit(c(1,1,1,1), "lines"))+
+  theme(axis.text.x = element_text(angle = 30, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 0.8, linetype = "solid"),axis.text.y = element_text(size=10))+
+  scale_y_continuous(labels=c("0L","200L","400L","600L"))+
+  scale_x_continuous(labels=c("0%","25%","50%","75%", "100%"))
+christ
+
+islam <-ggplot(data_graph3, aes(x = islmgenpct, y = Conso_totale)) + 
+  geom_point(aes(color = courant_maj_islam), alpha = 1.2) +
+  geom_smooth(method=lm, se = FALSE, color = "#4d7f17")+
+  scale_color_manual(values = c("#4d7f17","#6bb120", "#8ae429"), name = "Courant majoritaire", limits = c("Chiite", "Sunnite", "Autres"))+
+  theme_classic()+
+  xlab("Proportion de musulmans dans le pays")+
+  ylab("")+
+  stat_regline_equation(label.y = 550, label.x = 30, aes(label = ..rr.label..))+
+  theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))+
+  theme(plot.margin = unit(c(1,1,1,1), "lines"))+
+  theme(axis.text.x = element_text(angle = 30, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 0.8, linetype = "solid"),axis.text.y = element_text(size=10))+
+  scale_y_continuous(labels=c("0L","200L","400L","600L"))+
+  scale_x_continuous(labels=c("0%","25%","50%","75%", "100%"))
+islam
+
+grid.arrange(christ, islam)
+```
+
+
+
+<!-- Column {data-width=650} -->
+<!-- ----------------------------------------------------------------------- -->
+
+<!-- ### An easy solution for dashboard -->
+
+<!-- ```{r, echo = TRUE} -->
+<!-- #install.package('flexdasboard') -->
+<!-- #rmarkdown::draft("dashboard.Rmd", template = "flex_dashboard", package = "flexdashboard") -->
+<!-- ``` -->
+
+<!-- The [flexdashboard website](https://rmarkdown.rstudio.com/flexdashboard/index.html) provides multiple advanced examples. -->
+
+<!-- ### Some static graph -->
+
+<!-- ```{r data, eval = TRUE, echo = FALSE, results='hide', message = FALSE, warning=FALSE} -->
+<!-- n <- 100 -->
+<!-- dta <- tibble(size = round(rnorm(n, mean = 0, sd =10),2),  -->
+<!--            color = sample(x= c('Blue', 'Yellow'), size = n, replace = TRUE)) -->
+
+<!-- ``` -->
+
+
+<!-- ```{r graph_static,  echo = FALSE,  message = FALSE, warning=FALSE} -->
+<!-- p1 <- dta %>% ggplot() + -->
+<!--   aes(x=color, y = size) + -->
+<!--   geom_boxplot(aes(fill= color)) -->
+<!-- p1 -->
+<!-- ``` -->
+
+<!-- Column {.tabset .tabset-fade} -->
+<!-- ----------------------------------------------------------------------- -->
+
+
+<!-- ### Some dynamic maps -->
+
+<!-- ```{r  ggplotly, echo = TRUE,  eval = TRUE,  message = FALSE, warning=FALSE} -->
+<!-- plotly::ggplotly(p1) -->
+<!-- ``` -->
+
+>>>>>>> origin/Clara
 
 graph_christ <- ggplot(data = conso_christianisme) 
 graph_christ <- graph_christ + aes(x=religion, y=value, fill = Type) 
