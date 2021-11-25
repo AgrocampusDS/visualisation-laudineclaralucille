@@ -33,6 +33,7 @@ library(sf)
 library(maps)
 library(highcharter) 
 library(mapproj)
+library(grid)
 library(gridExtra)
 library(gtable)
 library(cowplot)
@@ -92,8 +93,9 @@ religion_main <- religion_brut %>%
                                'Shintoistes' = "shntgenpct"
                                ))
 
-# Création d'une palette pour les différents groupes de religion.
-# Christianisme : bleu, Islam : vert, autres : du jaune au violet.
+#creation d'une palette pour les différents groupes de religion.
+#chrétienté : bleu, islam : vert, autres : du jaune au violet.
+
 palette_religion = c(
   `Chrétiens - catholiques` = "#00b4ff",
   `Chrétiens - orthodoxes` = "#009eff",
@@ -110,7 +112,7 @@ palette_religion = c(
   `Shintoistes` = "#c90076"
 )
 
-# Création de la carte des religions majoritaires
+#création de la carte des religions majoritaires
 religion_map <- religion_main %>%
   rename(cowc = name) %>% 
   full_join(countrycode::codelist, by = "cowc") %>% # Jointure avec countrycode 
@@ -230,12 +232,13 @@ Row {.tabset .tabset-fade}
 
 ```{r}
 conso_religions_majoritaires <- alcool_religion %>% 
-    select(Country, ends_with("PerCapita"), -GDP_PerCapita, chrstprotpct, chrstcatpct, chrstorthpct, chrstangpct, chrstothrpct, budgenpct, islmgenpct, nonreligpct) %>%
+  filter(year==2010) %>% # Sélection de l'année 2010
+  select(Country, ends_with("PerCapita"), -GDP_PerCapita, chrstprotpct, chrstcatpct, chrstorthpct, chrstangpct, chrstothrpct, budgenpct, islmgenpct, nonreligpct) %>% # Sélection des variables d'intérêt
   pivot_longer(cols = ends_with("pct"), names_to = "religion", values_to = "percent") %>% 
-  group_by(Country) %>% 
-  filter(percent==max(percent)) %>%
-  mutate(religion = as.factor(religion)) %>% 
-  mutate(religion = fct_recode(religion,
+  group_by(Country) %>%  # Regroupement par pays
+  filter(percent==max(percent)) %>% # Sélection de la religion majoritaire
+  mutate(religion = as.factor(religion)) %>% # Conversion de la variable religion en facteur
+  mutate(religion = fct_recode(religion, # Recodage des religions pour la présentation
                                'Bouddhistes' = "budgenpct",
                                'Chrétiens' = "chrstangpct",
                                'Chrétiens' = "chrstcatpct",
@@ -246,24 +249,26 @@ conso_religions_majoritaires <- alcool_religion %>%
                                'Athées' = "nonreligpct"
                                )) %>%
   pivot_longer(cols = 2:4, names_to = "Type" ) %>%
-  mutate(Type = as.factor(Type)) 
+  mutate(Type = as.factor(Type)) # Conversion de la variable type en facteur
 
-graph_religions <- ggplot(data = conso_religions_majoritaires) 
-graph_religions <- graph_religions + aes(x=religion, y=value, fill = Type) 
-graph_religions <- graph_religions + geom_hline(yintercept = 100, col = "black", linetype="dashed")
-graph_religions <- graph_religions + geom_hline(yintercept = 200, col = "black", linetype="dashed")
-graph_religions <- graph_religions + geom_hline(yintercept = 300, col = "black", linetype="dashed")
-graph_religions <- graph_religions + geom_boxplot(outlier.shape=NA) 
-graph_religions <- graph_religions +  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"),name = "Type d'alcool", labels = c("Bière", "Spiritueux", "Vin"))
-graph_religions <- graph_religions + theme(plot.margin = unit(c(1,1,1,1), "lines"))
-graph_religions <- graph_religions + theme(axis.text.x = element_text(angle = 65, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 1, linetype = "solid"),axis.text.y = element_text(size=10))
-graph_religions <- graph_religions + theme(legend.position="bottom") 
-graph_religions <- graph_religions + labs(x="",y="",title="Représentation de la consommation d'alcool par habitant \nen fonction des religions principales",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")
-graph_religions <- graph_religions + theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))
-graph_religions <- graph_religions + scale_x_discrete(limits=c("Chrétiens","Musulmans","Bouddhistes", "Athées"))
-graph_religions <- graph_religions + scale_y_continuous(labels=c("0 L","100 L","200 L","300 L","400 L"))
-graph_religions <- graph_religions + annotate("rect", xmin = c(0.55,1.55,2.55,3.55), xmax = c(1.45,2.45,3.45,4.45), ymin = -5, ymax = 410, fill = c("#009eff","#4d7f17","#ffd966","#cc0000"), alpha = 0.1) 
-graph_religions <- graph_religions + theme(panel.background = element_rect(fill = "white",size = 2))
+# Création des boxplots : consommation d'alcool en fonction des religions majoritaires
+graph_religions <- ggplot(data = conso_religions_majoritaires) +
+  aes(x=religion, y=value, fill = Type) + # Remplissage avec la variable type 
+  geom_hline(yintercept = 100, col = "black", linetype="dashed")+ # Ligne pointillé (y = 100)
+  geom_hline(yintercept = 200, col = "black", linetype="dashed")+ # Ligne pointillé (y = 200)
+  geom_hline(yintercept = 300, col = "black", linetype="dashed")+ # Ligne pointillé (y = 300)
+  geom_boxplot(outlier.shape=NA) + # Création des boxplots 
+  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"),name = "Type d'alcool", labels = c("Bière", "Spiritueux", "Vin"))+ # Personnalisation de la légende
+  theme(plot.margin = unit(c(1,1,1,1), "lines"))+ # Modification des marges
+  theme(axis.text.x = element_text(angle = 65, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 1, linetype = "solid"),axis.text.y = element_text(size=10))+ # Modification des graduations des axes x et y 
+  theme(legend.position="bottom") + # Modification de la position de la légende
+  labs(x="",y="Consommation en L / habitant",title="Représentation de la consommation d'alcool par habitant \nen fonction des religions principales",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")+ # Spécification du titre principal, du sous-titre et des titres des axes
+  theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))+ # Modification des caractéristiques du titre et du sous-titre
+  scale_x_discrete(limits=c("Chrétiens","Musulmans","Bouddhistes", "Athées"))+ # Rangement de l'axe x 
+  scale_y_continuous(labels=c("0 L","100 L","200 L","300 L","400 L"))+ # Choix des labels de l'axe y
+  annotate("rect", xmin = c(0.55,1.55,2.55,3.55), xmax = c(1.45,2.45,3.45,4.45), ymin = -5, ymax = 410, fill = c("#009eff","#4d7f17","#ffd966","#cc0000"), alpha = 0.1) + # Ajout des rectangles colorés
+  theme(panel.background = element_rect(fill = "white",size = 2)) # Modification de la couleur de fond
+
 graph_religions 
 ```
 
@@ -271,12 +276,13 @@ graph_religions
 
 ```{r}
 conso_christianisme <- alcool_religion %>% 
-    select(Country, ends_with("PerCapita"), -GDP_PerCapita, chrstprotpct, chrstcatpct, chrstorthpct, chrstangpct, chrstothrpct) %>%
+  filter(year==2010) %>% # Sélection de l'année 2010
+  select(Country, ends_with("PerCapita"), -GDP_PerCapita, chrstprotpct, chrstcatpct, chrstorthpct, chrstangpct, chrstothrpct) %>% # Sélection des variables d'intérêt 
   pivot_longer(cols = ends_with("pct"), names_to = "religion", values_to = "percent") %>% 
-  group_by(Country) %>% 
-  filter(percent==max(percent)) %>%
-  mutate(religion = as.factor(religion)) %>% 
-  mutate(religion = fct_recode(religion,
+  group_by(Country) %>% # Regroupement par pays
+  filter(percent==max(percent)) %>% # Sélection de la religion majoritaire
+  mutate(religion = as.factor(religion)) %>% # Conversion de la variable religion en facteur
+  mutate(religion = fct_recode(religion, # Recodage des religions pour la présentation
                                'Protestants' = "chrstangpct",
                                'Catholiques' = "chrstcatpct",
                                'Orthodoxes' = "chrstorthpct",
@@ -284,38 +290,86 @@ conso_christianisme <- alcool_religion %>%
                                'Autres' = "chrstothrpct"
                                )) %>%
   pivot_longer(cols = 2:4, names_to = "Type" ) %>%
-  mutate(Type = as.factor(Type)) 
+  mutate(Type = as.factor(Type)) # Conversion de la variable type en facteur
 
-graph_christ <- ggplot(data = conso_christianisme) 
-graph_christ <- graph_christ + aes(x=religion, y=value, fill = Type) 
-graph_christ <- graph_christ + geom_hline(yintercept = 100, col = "black", linetype="dashed")
-graph_christ <- graph_christ + geom_hline(yintercept = 200, col = "black", linetype="dashed")
-graph_christ <- graph_christ + geom_hline(yintercept = 300, col = "black", linetype="dashed")
-graph_christ <- graph_christ + geom_boxplot(outlier.shape=NA) 
-graph_christ <- graph_christ +  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"),name = "Type d'alcool", labels = c("Bière", "Spiritueux", "Vin"))
-graph_christ <- graph_christ + theme(plot.margin = unit(c(1,1,1,1), "lines"))
-graph_christ <- graph_christ + theme(axis.text.x = element_text(angle = 65, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 1, linetype = "solid"),axis.text.y = element_text(size=10))
-graph_christ <- graph_christ + theme(legend.position="bottom") 
-graph_christ <- graph_christ + labs(x="",y="",title="Représentation de la consommation d'alcool par habitant \nen fonction des sous-religions du christianisme",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")
-graph_christ <- graph_christ + theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))
-graph_christ <- graph_christ + scale_x_discrete(limits=c("Catholiques","Orthodoxes", "Protestants","Autres"))
-graph_christ <- graph_christ + scale_y_continuous(labels=c("0 L","100 L","200 L","300 L","400 L"))
-graph_christ <- graph_christ + annotate("rect", xmin = c(0.55,1.55,2.55,3.55), xmax = c(1.45,2.45,3.45,4.45), ymin = -5, ymax = 410, fill = c("#00b4ff","#009eff","#0066ff","#004fff"), alpha = 0.1) 
-graph_christ <- graph_christ + theme(panel.background = element_rect(fill = "white",size = 2))
+# Création des boxplots : consommation d'alcool en fonction des sous-religions du Christianisme
+graph_christ <- ggplot(data = conso_christianisme)+ 
+  aes(x=religion, y=value, fill = Type) + # Remplissage avec la variable type 
+  geom_hline(yintercept = 100, col = "black", linetype="dashed")+ # Ligne pointillé (y = 100)
+  geom_hline(yintercept = 200, col = "black", linetype="dashed")+ # Ligne pointillé (y = 200)
+  geom_hline(yintercept = 300, col = "black", linetype="dashed")+ # Ligne pointillé (y = 300)
+  geom_boxplot(outlier.shape=NA) + # Création des boxplots
+  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"),name = "Type d'alcool", labels = c("Bière", "Spiritueux", "Vin"))+ # Personnalisation de la légende
+  theme(plot.margin = unit(c(1,1,1,1), "lines"))+ # Modification des marges
+  theme(axis.text.x = element_text(angle = 65, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 1, linetype = "solid"),axis.text.y = element_text(size=10))+ # Modification des graduations des axes x et y 
+  theme(legend.position="bottom") + # Modification de la position de la légende
+  labs(x="",y="Consommation en L / habitant",title="Représentation de la consommation d'alcool par habitant \nen fonction des sous-religions du christianisme",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")+ # Spécification du titre principal, du sous-titre et des titres des axes
+  theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))+ # Modification des caractéristiques du titre et du sous-titre
+  scale_x_discrete(limits=c("Catholiques","Orthodoxes", "Protestants","Autres"))+ # Rangement de l'axe x 
+  scale_y_continuous(labels=c("0 L","100 L","200 L","300 L","400 L"))+ # Choix des labels de l'axe y
+  annotate("rect", xmin = c(0.55,1.55,2.55,3.55), xmax = c(1.45,2.45,3.45,4.45), ymin = -5, ymax = 410, fill = c("#00b4ff","#009eff","#0066ff","#004fff"), alpha = 0.1) + # Ajout des rectangles colorés
+  theme(panel.background = element_rect(fill = "white",size = 2)) # Modification de la couleur de fond
 
 graph_christ
 ```
 
 
-Régression
+Régression linéaire
 =======================================================================
 
+### Consommation d'alcool en fonction de la proportion de chrétiens ou musulmans dans chaque pays.
+
 ```{r}
-print("A ajouter")
+data_graph3 <- alcool_religion %>%
+  filter(year == 2010) %>% #Selection des données de l"année 2010
+  select(Country,Hemisphere, ends_with ("Capita"), ends_with ("pct")) %>%
+  mutate(maj_chrst = pmax(chrstprotpct,chrstcatpct, chrstorthpct, chrstothrpct)) %>% 
+  mutate (courant_maj_chrst = ifelse(maj_chrst == chrstcatpct,"Catholique", ifelse(maj_chrst == chrstorthpct, "Orthodoxe", ifelse(maj_chrst== chrstothrpct, "Autres", "Protestant")) )) %>% #Recherche du courant de l'islam majoritaire dans chaqeu pays
+  mutate(courant_maj_chrst = as.factor(courant_maj_chrst)) %>% 
+  mutate(maj_islam = pmax (islmsunpct,islmshipct,islmibdpct, islmnatpct,islmalwpct,islmahmpct, islmothrpct)) %>% 
+  mutate (courant_maj_islam = ifelse(maj_islam == islmsunpct,"Sunnite", ifelse(maj_islam == islmshipct, "Chiite", "Autres"))) %>% #Recherche du courant de l'islam majoritaire dans chaqeu pays
+  mutate (courant_maj_islam = as.factor(courant_maj_islam)) %>% 
+  mutate(Conso_totale = Beer_PerCapita + Wine_PerCapita + Spirit_PerCapita) %>%#Calcul de la consommation totale
+  filter(!is.na(Conso_totale)) %>% #Suppression des na
+  mutate (chrstgenpct = chrstgenpct*100) %>% #Transformation en %
+  mutate (islmgenpct = islmgenpct*100)#Transformation en %
+
+christ <-ggplot(data_graph3, aes(x = chrstgenpct, y = Conso_totale)) + #Création de la regression linéaire de la consomamtion d'alcool en fonction du % de chétiens dans le pays
+  geom_point(aes(color = courant_maj_chrst), alpha = 1.2) +#Création des points de la consomamtion d'alcool en fonction du % de chétiens dans le pays. Coloration des points en fonctions des courants
+  geom_smooth(method=lm, se = FALSE)+ #Ajout de la droite de regression linéaire générale
+  scale_color_manual(values = c("#00b4ff","#0066ff", "#009eff", "#004fff"), name = "Courant majoritaire", limits = c("Catholique", "Protestant", "Orthodoxe", "Autres"))+#Couleur des points + ordre des courants dans la légende
+  theme_minimal()+
+  labs (x ="Proportion de chrétiens dans le pays", y="")+
+  theme_classic()+ #thème classique pour l'arrière plan
+  stat_regline_equation(label.y = 550, label.x = 30, aes(label = ..rr.label..))+ #Ajout du R2 sur le graphique
+  theme(plot.margin = unit(c(1,1,1,1), "lines"))+#GEstion des marges
+  theme(axis.text.x = element_text(angle = 30, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 0.8, linetype = "solid"),axis.text.y = element_text(size=10))+ #Amélioration des axes (texte, lisibilité, échelle, etc)
+  scale_y_continuous(labels=c("0L","200L","400L","600L"))+#Modification des valeurs de l'axe y
+  scale_x_continuous(labels=c("0%","25%","50%","75%", "100%"))#Modification de des valeurs de l'axe x
+
+#Même chose que la graphique précédent mais pour l'islam et le % de musulmans dans chaque pays
+
+islam <-ggplot(data_graph3, aes(x = islmgenpct, y = Conso_totale)) + 
+  geom_point(aes(color = courant_maj_islam), alpha = 1.2) +
+  geom_smooth(method=lm, se = FALSE, color = "#4d7f17")+
+  scale_color_manual(values = c("#4d7f17","#6bb120", "#8ae429"), name = "Courant majoritaire", limits = c("Chiite", "Sunnite", "Autres"))+
+  theme_classic()+
+  xlab("Proportion de musulmans dans le pays")+
+  ylab("")+
+  stat_regline_equation(label.y = 550, label.x = 30, aes(label = ..rr.label..))+
+  theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))+
+  theme(plot.margin = unit(c(1,1,1,1), "lines"))+
+  theme(axis.text.x = element_text(angle = 30, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 0.8, linetype = "solid"),axis.text.y = element_text(size=10))+
+  scale_y_continuous(labels=c("0L","200L","400L","600L"))+
+  scale_x_continuous(labels=c("0%","25%","50%","75%", "100%"))
+
+grid.arrange(christ, islam, nrow =2,
+     top = textGrob("Consommation d'alcool dans le monde \nZoom sur les 2 religions principales",gp=gpar(fontsize=15,font=3)))
+
 ```
 
 
-Vue d'ensemble
+Résumé des graphiques
 =======================================================================
 
 Column 
@@ -329,34 +383,16 @@ grid::grid.draw(rbind(greligion, galcool))
 
 Column 
 -------------------------------------
-
-Row {.tabset .tabset-fade}
--------------------------------------
    
 ### Consommation d'alcool en fonction des religions principales
 
 ```{r}
 graph_religions 
 ```   
- 
-### Consommation d'alcool en fonction des 4 sous-religions du Christianisme
-    
+
+### Consommation d'alcool en fonction de la proportion de chrétiens ou musulmans dans chaque pays
+
 ```{r}
-graph_christ 
+grid.arrange(christ, islam, nrow =2,
+     top = textGrob("Consommation d'alcool dans le monde \nZoom sur les 2 religions principales",gp=gpar(fontsize=15,font=3)))
 ```
-
-Row {.tabset .tabset-fade}
--------------------------------------
-   
-### Consommation d'alcool en fonction des religions principales
-
-```{r}
-graph_religions 
-```   
- 
-### Consommation d'alcool en fonction des sous-religions du Christianisme
-    
-```{r}
-graph_christ 
-```
-
