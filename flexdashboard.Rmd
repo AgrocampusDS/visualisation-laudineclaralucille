@@ -251,22 +251,22 @@ conso_religions_majoritaires <- alcool_religion %>%
   pivot_longer(cols = 2:4, names_to = "Type" ) %>%
   mutate(Type = as.factor(Type)) 
 
-graph_religions <- ggplot(data = conso_religions_majoritaires) 
-graph_religions <- graph_religions + aes(x=religion, y=value, fill = Type) 
-graph_religions <- graph_religions + geom_hline(yintercept = 100, col = "black", linetype="dashed")
-graph_religions <- graph_religions + geom_hline(yintercept = 200, col = "black", linetype="dashed")
-graph_religions <- graph_religions + geom_hline(yintercept = 300, col = "black", linetype="dashed")
-graph_religions <- graph_religions + geom_boxplot(outlier.shape=NA) 
-graph_religions <- graph_religions +  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"),name = "Type d'alcool", labels = c("Bière", "Spiritueux", "Vin"))
-graph_religions <- graph_religions + theme(plot.margin = unit(c(1,1,1,1), "lines"))
-graph_religions <- graph_religions + theme(axis.text.x = element_text(angle = 65, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 1, linetype = "solid"),axis.text.y = element_text(size=10))
-graph_religions <- graph_religions + theme(legend.position="bottom") 
-graph_religions <- graph_religions + labs(x="",y="",title="Représentation de la consommation d'alcool par habitant \nen fonction des religions principales",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")
-graph_religions <- graph_religions + theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))
-graph_religions <- graph_religions + scale_x_discrete(limits=c("Chrétiens","Musulmans","Bouddhistes", "Athées"))
-graph_religions <- graph_religions + scale_y_continuous(labels=c("0 L","100 L","200 L","300 L","400 L"))
-graph_religions <- graph_religions + annotate("rect", xmin = c(0.55,1.55,2.55,3.55), xmax = c(1.45,2.45,3.45,4.45), ymin = -5, ymax = 410, fill = c("#009eff","#4d7f17","#ffd966","#cc0000"), alpha = 0.1) 
-graph_religions <- graph_religions + theme(panel.background = element_rect(fill = "white",size = 2))
+graph_religions <- ggplot(data = conso_religions_majoritaires) +
+  aes(x=religion, y=value, fill = Type) +
+  geom_hline(yintercept = 100, col = "black", linetype="dashed")+
+  geom_hline(yintercept = 200, col = "black", linetype="dashed")+
+  geom_hline(yintercept = 300, col = "black", linetype="dashed")+
+  geom_boxplot(outlier.shape=NA) +
+  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"),name = "Type d'alcool", labels = c("Bière", "Spiritueux", "Vin"))+
+  theme(plot.margin = unit(c(1,1,1,1), "lines"))+
+  theme(axis.text.x = element_text(angle = 65, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 1, linetype = "solid"),axis.text.y = element_text(size=10))+
+  theme(legend.position="bottom") +
+  labs(x="",y="",title="Représentation de la consommation d'alcool par habitant \nen fonction des religions principales",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")+
+  theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))+
+  scale_x_discrete(limits=c("Chrétiens","Musulmans","Bouddhistes", "Athées"))
+  scale_y_continuous(labels=c("0 L","100 L","200 L","300 L","400 L"))+
+graph_religions <- graph_religions + annotate("rect", xmin = c(0.55,1.55,2.55,3.55), xmax = c(1.45,2.45,3.45,4.45), ymin = -5, ymax = 410, fill = c("#009eff","#4d7f17","#ffd966","#cc0000"), alpha = 0.1) +
+  theme(panel.background = element_rect(fill = "white",size = 2))
 graph_religions 
 ```
 
@@ -289,22 +289,22 @@ conso_christianisme <- alcool_religion %>%
   pivot_longer(cols = 2:4, names_to = "Type" ) %>%
   mutate(Type = as.factor(Type)) 
 
-graph_christ <- ggplot(data = conso_christianisme) 
-graph_christ <- graph_christ + aes(x=religion, y=value, fill = Type) 
-graph_christ <- graph_christ + geom_hline(yintercept = 100, col = "black", linetype="dashed")
-graph_christ <- graph_christ + geom_hline(yintercept = 200, col = "black", linetype="dashed")
-graph_christ <- graph_christ + geom_hline(yintercept = 300, col = "black", linetype="dashed")
-graph_christ <- graph_christ + geom_boxplot(outlier.shape=NA) 
-graph_christ <- graph_christ +  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"),name = "Type d'alcool", labels = c("Bière", "Spiritueux", "Vin"))
-graph_christ <- graph_christ + theme(plot.margin = unit(c(1,1,1,1), "lines"))
-graph_christ <- graph_christ + theme(axis.text.x = element_text(angle = 65, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 1, linetype = "solid"),axis.text.y = element_text(size=10))
-graph_christ <- graph_christ + theme(legend.position="bottom") 
-graph_christ <- graph_christ + labs(x="",y="",title="Représentation de la consommation d'alcool par habitant \nen fonction des sous-religions du christianisme",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")
-graph_christ <- graph_christ + theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))
-graph_christ <- graph_christ + scale_x_discrete(limits=c("Catholiques","Orthodoxes", "Protestants","Autres"))
-graph_christ <- graph_christ + scale_y_continuous(labels=c("0 L","100 L","200 L","300 L","400 L"))
-graph_christ <- graph_christ + annotate("rect", xmin = c(0.55,1.55,2.55,3.55), xmax = c(1.45,2.45,3.45,4.45), ymin = -5, ymax = 410, fill = c("#00b4ff","#009eff","#0066ff","#004fff"), alpha = 0.1) 
-graph_christ <- graph_christ + theme(panel.background = element_rect(fill = "white",size = 2))
+graph_christ <- ggplot(data = conso_christianisme)+
+  aes(x=religion, y=value, fill = Type) +
+  geom_hline(yintercept = 100, col = "black", linetype="dashed")+
+  geom_hline(yintercept = 200, col = "black", linetype="dashed")+
+  geom_hline(yintercept = 300, col = "black", linetype="dashed")+
+  geom_boxplot(outlier.shape=NA) +
+  scale_fill_manual(values=c("darkgoldenrod1","aquamarine4", "darkred"),name = "Type d'alcool", labels = c("Bière", "Spiritueux", "Vin"))+
+  theme(plot.margin = unit(c(1,1,1,1), "lines"))+
+  theme(axis.text.x = element_text(angle = 65, hjust = 1,size=10),axis.line = element_line(colour = "black", size = 1, linetype = "solid"),axis.text.y = element_text(size=10))+
+  theme(legend.position="bottom") +
+  labs(x="",y="",title="Représentation de la consommation d'alcool par habitant \nen fonction des sous-religions du christianisme",subtitle="Spécification sur la consommation d'alcool : bière, spiritueux ou vin")+
+  theme(plot.title = element_text(face = "bold", size = 14,hjust=0.5), plot.subtitle = element_text(size = 11,hjust=0.5))+
+graph_christ <- graph_christ + scale_x_discrete(limits=c("Catholiques","Orthodoxes", "Protestants","Autres"))+
+  scale_y_continuous(labels=c("0 L","100 L","200 L","300 L","400 L"))+
+  annotate("rect", xmin = c(0.55,1.55,2.55,3.55), xmax = c(1.45,2.45,3.45,4.45), ymin = -5, ymax = 410, fill = c("#00b4ff","#009eff","#0066ff","#004fff"), alpha = 0.1) +
+  theme(panel.background = element_rect(fill = "white",size = 2))
 
 graph_christ
 ```
